@@ -125,7 +125,7 @@ module Raioquic
       def push_quic_preferred_address
         raise NotImplementedError
       end
-      
+
       def pull_quic_transport_parameters
         raise NotImplementedError
       end
@@ -166,7 +166,7 @@ module Raioquic
       NON_ACK_ELICITING_FRAME_TYPES = [] # TODO:
       NON_IN_FLIGHT_FRAME_TYPES = [] # TODO:
       PROBING_FRAME_TYPES = [] # TODO:
-      
+
       class QuicResetStreamFrame
         attr_accessor :error_code
         attr_accessor :final_size
