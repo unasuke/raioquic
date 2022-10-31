@@ -22,5 +22,22 @@ module Raioquic
         attr_accessor stateless_reset_token: String
       end
     end
+
+    class PacketBuilder
+      class QuicSentPacket
+        attr_accessor epoch: untyped
+        attr_accessor in_flight: bool
+        attr_accessor is_ack_eliciting: bool
+        attr_accessor is_crypto_packet: bool
+        attr_accessor packet_number: Integer
+        attr_accessor packet_type: Integer
+        attr_accessor sent_time: untyped
+        attr_accessor sent_bytes: Integer
+      end
+
+      class QuicPacketBuilder
+        attr_accessor packet_number: Integer
+      end
+    end
   end
 end
