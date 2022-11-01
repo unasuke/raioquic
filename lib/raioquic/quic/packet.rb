@@ -57,8 +57,20 @@ module Raioquic
         attr_accessor :rest_length
       end
 
-      def decode_packet_number()
-        raise NotImplementedError        
+      # Recover a packer number from a truncated packet number.
+      # See: Appendix A - Sample Packet Number Decoding Algorithm
+      def decode_packet_number(truncated:, num_bits:, expected:)
+        window = 1 << num_bits
+        half_window = (window / 2).floor
+        candidate = (expected & ~(window - 1)) | truncated
+
+        if candidate <= expected - half_window && candidate < (1 << 62) - window
+          candidate + window
+        elsif candidate > expected + half_window && candidate >= window
+          candidate - window
+        else
+          candidate
+        end
       end
 
       def get_retry_integrity_tag()
