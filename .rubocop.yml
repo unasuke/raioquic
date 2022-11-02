@@ -1,5 +1,15 @@
 AllCops:
   TargetRubyVersion: 3.0
+  NewCops: enable
+
+Naming/AccessorMethodName:
+  Enabled: false # for pythonic
+
+Naming/PredicateName:
+  Enabled: false # for pythonic
+
+Style/AccessorGrouping:
+  EnforcedStyle: separated
 
 Style/StringLiterals:
   Enabled: true
