@@ -1,0 +1,34 @@
+module Raioquic
+  class Buffer
+    # extend Forwardable
+
+    class BufferReadError < StandardError
+    end
+    class BufferWriteError < StandardError
+    end
+    class ValueError < StandardError
+    end
+
+    def self.encode_uint_var: (Integer) -> String
+    def initialize: (?capacity: Integer?, ?data: String) -> void
+    def dealloc: () -> nil
+    def data: () -> String
+    def seek: (Integer) -> void
+    def data_slice: (start: Integer, ends: Integer) -> untyped
+    def pull_bytes: (Integer) -> String
+    def pull_uint8: () -> Integer
+    def pull_uint16: () -> Integer
+    def pull_uint32: () -> Integer
+    def pull_uint64: () -> Integer
+    def pull_uint_var: () -> Integer
+    def push_bytes: (String) -> void
+    def push_uint8: (Integer) -> void
+    def push_uint16: (Integer) -> void
+    def push_uint32: (Integer) -> void
+    def push_uint64: (Integer) -> void
+    def push_uint_var: (Integer) -> void
+    def encode_uint_var: (Integer) -> nil
+    def size_uint_var: (Integer) -> (1 | 2 | 4 | 8)
+    private def check_read_bounds: (Integer) -> void
+  end
+end
