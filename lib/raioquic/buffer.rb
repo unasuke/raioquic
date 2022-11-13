@@ -10,9 +10,17 @@ module Raioquic
     BufferReadError = Class.new(StandardError)
     BufferWriteError = Class.new(StandardError)
     ValueError = Class.new(StandardError)
+    UINT_VAR_MAX_SIZE = 8
 
     def_delegators :@buffer, :eof, :eof
     def_delegators :@buffer, :tell, :tell
+
+    # Encode a variable-length unsigned integer.
+    def self.encode_uint_var(value)
+      buf = self.new(capacity: UINT_VAR_MAX_SIZE)
+      buf.push_uint_var(value)
+      buf.data
+    end
 
     def initialize(capacity: nil, data: "")
       @position = 0 # bytes count
@@ -159,9 +167,6 @@ module Raioquic
       else
         raise ValueError, "Integer is too big for a variable-length integer"
       end
-    end
-
-    def encode_uint_var(value)
     end
 
     # Return the number of bytes required to encode the given value
