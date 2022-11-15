@@ -11,6 +11,7 @@ module Raioquic
     def initialize: (?capacity: Integer?, ?data: String) -> void
     def dealloc: () -> nil
     def data: () -> String
+    def tell: () -> ::Integer # delegated method
     def seek: (Integer) -> void
     def capacity: -> ::Integer
     def data_slice: (start: Integer, ends: Integer) -> untyped

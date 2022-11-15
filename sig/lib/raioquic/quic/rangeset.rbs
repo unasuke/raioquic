@@ -4,7 +4,7 @@ module Raioquic
       @ranges: ::Array[::Range[::Integer]]
 
       def initialize: (?ranges: ::Array[::Range[::Integer]]) -> Rangeset
-      def list: () -> untyped
+      def list: () -> ::Array[::Range[::Integer]]
       def add: (::Integer, ?(::Integer|nil)) -> void
       def bounds: () -> ::Range[::Integer]
       def length: () -> ::Integer
