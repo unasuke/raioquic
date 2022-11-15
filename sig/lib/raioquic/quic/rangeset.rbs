@@ -1,0 +1,17 @@
+module Raioquic
+  module Quic
+    class Rangeset
+      @ranges: ::Array[::Range[::Integer]]
+
+      def initialize: (?ranges: ::Array[::Range[::Integer]]) -> Rangeset
+      def list: () -> untyped
+      def add: (::Integer, ?(::Integer|nil)) -> void
+      def bounds: () -> ::Range[::Integer]
+      def length: () -> ::Integer
+      def subtract: (::Integer, ::Integer) -> void
+      def eql?: (untyped) -> bool
+      def ==: (untyped) -> bool
+      private def sort: () -> void
+    end
+  end
+end
