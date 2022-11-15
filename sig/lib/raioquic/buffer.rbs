@@ -6,14 +6,13 @@ module Raioquic
     end
     class BufferWriteError < StandardError
     end
-    class ValueError < StandardError
-    end
 
     def self.encode_uint_var: (Integer) -> String
     def initialize: (?capacity: Integer?, ?data: String) -> void
     def dealloc: () -> nil
     def data: () -> String
     def seek: (Integer) -> void
+    def capacity: -> ::Integer
     def data_slice: (start: Integer, ends: Integer) -> untyped
     def pull_bytes: (Integer) -> String
     def pull_uint8: () -> Integer

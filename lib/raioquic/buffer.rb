@@ -9,7 +9,7 @@ module Raioquic
 
     BufferReadError = Class.new(StandardError)
     BufferWriteError = Class.new(StandardError)
-    ValueError = Class.new(StandardError)
+
     UINT_VAR_MAX_SIZE = 8
 
     def_delegators :@buffer, :eof, :eof
@@ -41,6 +41,10 @@ module Raioquic
       @buffer.seek(offset)
     rescue Errno::EINVAL
       raise BufferReadError
+    end
+
+    def capacity
+      @capacity
     end
 
     # NOTE: "end" is reserved keyword in Ruby

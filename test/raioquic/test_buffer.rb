@@ -218,7 +218,7 @@ class TestRaioquicBuffer < Minitest::Test
 
   def test_push_uint_var_too_big
     buf = Raioquic::Buffer.new(capacity: 8)
-    assert_raises Raioquic::Buffer::ValueError, "Integer is too big for a variable-length integer" do
+    assert_raises Raioquic::ValueError, "Integer is too big for a variable-length integer" do
       buf.push_uint_var(4611686018427387904)
     end
   end
@@ -229,7 +229,7 @@ class TestRaioquicBuffer < Minitest::Test
     assert_equal 2, buf.size_uint_var(16383)
     assert_equal 4, buf.size_uint_var(1073741823)
     assert_equal 8, buf.size_uint_var(4611686018427387903)
-    assert_raises Raioquic::Buffer::ValueError, "Integer is too big for a variable-length integer" do
+    assert_raises Raioquic::ValueError, "Integer is too big for a variable-length integer" do
       buf.size_uint_var(4611686018427387904)
     end
   end
