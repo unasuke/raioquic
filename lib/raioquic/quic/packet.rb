@@ -1,5 +1,10 @@
 # frozen_string_literal: true
 
+require_relative "../buffer"
+require_relative "rangeset"
+require "socket"
+require "ipaddr"
+
 module Raioquic
   module Quic
     class Packet
@@ -59,7 +64,7 @@ module Raioquic
 
       # Recover a packer number from a truncated packet number.
       # See: Appendix A - Sample Packet Number Decoding Algorithm
-      def decode_packet_number(truncated:, num_bits:, expected:)
+      def self.decode_packet_number(truncated:, num_bits:, expected:)
         window = 1 << num_bits
         half_window = (window / 2).floor
         candidate = (expected & ~(window - 1)) | truncated
@@ -73,77 +78,311 @@ module Raioquic
         end
       end
 
-      def get_retry_integrity_tag()
-        raise NotImplementedError        
+      # Calculate the integrity tag for a RETRY packet.
+      def self.get_retry_integrity_tag(packet_without_tag:, original_destination_cid:, version:)
+        buf = Buffer.new(capacity: 1 + original_destination_cid.size + packet_without_tag.size)
+        buf.push_uint8(original_destination_cid.size)
+        buf.push_bytes(original_destination_cid)
+        buf.push_bytes(packet_without_tag)
+        aead_key = RETRY_AEAD_KEY_VERSION_1
+        aead_nonce = RETRY_AEAD_NONCE_VERSION_1
       end
 
-      def get_spin_bit
-        raise NotImplementedError
+      def self.get_spin_bit(first_byte)
+        (first_byte & PACKET_SPIN_BIT) != 0
       end
 
-      def is_draft_version
-        raise NotImplementedError # raioquic drops draft version's implementation
+      def self.is_draft_version(version)
+        return false # raioquic drops draft version's implementation
       end
 
-      def pull_quic_header
-        raise NotImplementedError
+      def self.is_long_header(first_byte)
+        (first_byte & PACKET_LONG_HEADER) != 0
       end
 
-      def encode_quic_retry
-        raise NotImplementedError
+      def self.pull_quic_header(buf:, host_cid_length:)
+        first_byte = buf.pull_uint8
+        integrity_tag = ""
+        token = ""
+
+        if is_long_header(first_byte)
+          version = buf.pull_uint32
+          destination_cid_length = buf.pull_uint8
+          if destination_cid_length > CONNECTION_ID_MAX_SIZE
+            raise ValueError, "Destination CID is too long (#{destination_cid_length} bytes)"
+          end
+          destination_cid = buf.pull_bytes(destination_cid_length)
+          source_cid_length = buf.pull_uint8
+          if source_cid_length > CONNECTION_ID_MAX_SIZE
+            raise ValueError, "Souce CID is too long (#{source_cid_length} bytes)"
+          end
+
+          source_cid = buf.pull_bytes(source_cid_length)
+
+          if version == QuicProtocolVersion::NEGOTIATION
+            packet_type = nil
+            rest_length = buf.capacity - buf.tell # TODO:
+          else
+            if (first_byte & PACKET_FIXED_BIT) == 0
+              raise ValueError, "Packet fixed bit is zero"
+            end
+            packet_type = first_byte & PACKET_TYPE_MASK
+            if packet_type == PACKET_TYPE_INITIAL
+              token_length = buf.pull_uint_var
+              token = buf.pull_bytes(token_length)
+              rest_length = buf.pull_uint_var
+            elsif packet_type == PACKET_TYPE_RETRY
+              token_length = buf.capacity - buf.tell - RETRY_INTEGRITY_TAG_SIZE
+              token = buf.pull_bytes(token_length)
+              integrity_tag = buf.pull_bytes(RETRY_INTEGRITY_TAG_SIZE)
+              rest_length = 0
+            else
+              rest_length = buf.pull_uint_var
+            end
+
+            # check remainder length
+            if rest_length > buf.capacity - buf.tell
+              raise ValueError, "Packet payload is truncated"
+            end
+          end
+
+          return QuicHeader.new.tap do |hdr|
+            hdr.is_long_header = true
+            hdr.version = version
+            hdr.packet_type= packet_type
+            hdr.destination_cid = destination_cid
+            hdr.source_cid = source_cid
+            hdr.token = token
+            hdr.integrity_tag = integrity_tag
+            hdr.rest_length = rest_length
+          end
+        else
+          # short header packet
+          if (first_byte & PACKET_FIXED_BIT) == 0
+            raise ValueError, "Packet fixed bit is zero"
+          end
+          packet_type = first_byte & PACKET_TYPE_MASK
+          destination_cid = buf.pull_bytes(host_cid_length)
+
+          return QuicHeader.new.tap do |hdr|
+            hdr.is_long_header = false
+            hdr.version = nil
+            hdr.packet_type = packet_type
+            hdr.destination_cid = destination_cid
+            hdr.source_cid = ""
+            hdr.token = ""
+            hdr.integrity_tag = integrity_tag
+            hdr.rest_length = buf.capacity - buf.tell
+          end
+        end
       end
 
-      def encode_quic_version_negotiation
-        raise NotImplementedError
+      def self.encode_quic_retry(version:, source_cid:, destination_cid:, original_destination_cid:, retry_token:)
+        buf = Buffer.new(capacity: 7 + destination_cid.size + source_cid.size + retry_token.size + RETRY_INTEGRITY_TAG_SIZE)
+        buf.push_uint8(PACKET_TYPE_RETRY)
+        buf.push_uint32(version)
+        buf.push_uint8(destination_cid.length)
+        buf.push_bytes(destination_cid)
+        buf.push_uint8(source_cid.length)
+        buf.push_bytes(source_cid)
+        buf.push_bytes(retry_token)
+        buf.push_bytes(
+          get_retry_integrity_tag(packet_without_tag: buf.data, original_destination_cid: original_destination_cid, version: version)
+        )
+
+        return buf.data
       end
 
-      class QuicPreferredAddress
-        attr_accessor :ipv4_addresses
-        attr_accessor :ipv6_addresses
-        attr_accessor :connection_id
-        attr_accessor :stateless_reset_token
+      def self.encode_quic_version_negotiation(source_cid:, destination_cid:, supported_versions:)
+        buf = Buffer.new(capacity: 7 + destination_cid.length + source_cid.length + 4 * supported_versions.length)
+        buf.push_uint8(get_urandom_byte | PACKET_LONG_HEADER)
+        buf.push_uint32(QuicProtocolVersion::NEGOTIATION)
+        buf.push_uint8(destination_cid.length)
+        buf.push_bytes(destination_cid)
+        buf.push_uint8(source_cid.length)
+        buf.push_bytes(source_cid)
+        supported_versions.each do |version|
+          buf.push_uint32(version)
+        end
+        buf.data
       end
 
-      class QuicTransportParameters
-        attr_accessor :original_destication_connection_id
-        attr_accessor :max_idle_timeout
-        attr_accessor :stateless_reset_token
-        attr_accessor :max_udp_payload_size
-        attr_accessor :initial_max_data
-        attr_accessor :initial_max_stream_data_bidi_local
-        attr_accessor :initial_max_stream_data_bidi_remote
-        attr_accessor :initial_max_stream_data_uni
-        attr_accessor :initial_max_streams_bidi
-        attr_accessor :initial_max_streams_uni
-        attr_accessor :ack_delay_exponent
-        attr_accessor :max_ack_delay
-        attr_accessor :disable_active_migration
-        attr_accessor :preferred_address
-        attr_accessor :active_connection_id_limit
-        attr_accessor :initial_source_connection_id
-        attr_accessor :retry_source_connection_id
-        attr_accessor :max_datagram_frame_size
-        attr_accessor :quantum_readiness
+      def self.get_urandom_byte # private
+        Random.urandom(1)[0].unpack1("C")
       end
+      private_class_method :get_urandom_byte
+
+      # class QuicPreferredAddress
+      #   attr_accessor :ipv4_address
+      #   attr_accessor :ipv6_address
+      #   attr_accessor :connection_id
+      #   attr_accessor :stateless_reset_token
+      # end
+      QuicPreferredAddress = Struct.new(
+        :ipv4_address,
+        :ipv6_address,
+        :connection_id,
+        :stateless_reset_token,
+      )
+
+      # class QuicTransportParameters
+      #   attr_accessor :original_destination_connection_id
+      #   attr_accessor :max_idle_timeout
+      #   attr_accessor :stateless_reset_token
+      #   attr_accessor :max_udp_payload_size
+      #   attr_accessor :initial_max_data
+      #   attr_accessor :initial_max_stream_data_bidi_local
+      #   attr_accessor :initial_max_stream_data_bidi_remote
+      #   attr_accessor :initial_max_stream_data_uni
+      #   attr_accessor :initial_max_streams_bidi
+      #   attr_accessor :initial_max_streams_uni
+      #   attr_accessor :ack_delay_exponent
+      #   attr_accessor :max_ack_delay
+      #   attr_accessor :disable_active_migration
+      #   attr_accessor :preferred_address
+      #   attr_accessor :active_connection_id_limit
+      #   attr_accessor :initial_source_connection_id
+      #   attr_accessor :retry_source_connection_id
+      #   attr_accessor :max_datagram_frame_size
+      #   attr_accessor :quantum_readiness
+      # end
+      QuicTransportParameters = Struct.new(
+        :original_destination_connection_id,
+        :max_idle_timeout,
+        :stateless_reset_token,
+        :max_udp_payload_size,
+        :initial_max_data,
+        :initial_max_stream_data_bidi_local,
+        :initial_max_stream_data_bidi_remote,
+        :initial_max_stream_data_uni,
+        :initial_max_streams_bidi,
+        :initial_max_streams_uni,
+        :ack_delay_exponent,
+        :max_ack_delay,
+        :disable_active_migration,
+        :preferred_address,
+        :active_connection_id_limit,
+        :initial_source_connection_id,
+        :retry_source_connection_id,
+        :max_datagram_frame_size,
+        :quantum_readiness,
+      )
 
       PARAMS = {
-        # TODO:
+        0x00 => { name: :original_destination_connection_id, type: :bytes },
+        0x01 => { name: :max_idle_timeout, type: :int },
+        0x02 => { name: :stateless_reset_token, type: :bytes },
+        0x03 => { name: :max_udp_payload_size, type: :int },
+        0x04 => { name: :initial_max_data, type: :int },
+        0x05 => { name: :initial_max_stream_data_bidi_local, type: :int },
+        0x06 => { name: :initial_max_stream_data_bidi_remote, type: :int },
+        0x07 => { name: :initial_max_stream_data_uni, type: :int },
+        0x08 => { name: :initial_max_streams_bidi, type: :int },
+        0x09 => { name: :initial_max_streams_uni, type: :int },
+        0x0a => { name: :ack_delay_exponent, type: :int },
+        0x0b => { name: :max_ack_delay, type: :int },
+        0x0c => { name: :disable_active_migration, type: :bool },
+        0x0d => { name: :preferred_address, type: :quicpreferredaddress },
+        0x0e => { name: :active_connection_id_limit, type: :bytes },
+        0x0f => { name: :initial_source_connection_id, type: :bytes },
+        0x10 => { name: :retry_source_connection_id, type: :bytes },
+        # extensions
+        0x0020 => { name: :max_datagram_frame_size, type: :int },
+        0x0c37 => { name: :quantum_readiness, type: :bytes },
       }
 
-      def pull_quic_preferred_address
-        raise NotImplementedError
+      def self.pull_quic_preferred_address(buf)
+        ipv4_address = nil
+        ipv4_host = buf.pull_bytes(4)
+        ipv4_port = buf.pull_uint16
+
+        if ipv4_host != "\x00\x00\x00\x00"
+          ipv4_address = { host: IPAddr.new_ntoh(ipv4_host), port: ipv4_port }
+        end
+
+        ipv6_address = nil
+        ipv6_host = buf.pull_bytes(16)
+        ipv6_port = buf.pull_uint16
+
+        if ipv6_host != "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+          ipv6_address = { host: IPAddr.new_ntoh(ipv6_host), port: ipv6_port }
+        end
+
+        connection_id_length = buf.pull_uint8
+        connection_id = buf.pull_bytes(connection_id_length)
+        stateless_reset_token = buf.pull_bytes(16)
+
+        QuicPreferredAddress.new.tap do |addr|
+          addr.ipv4_address = ipv4_address
+          addr.ipv6_address = ipv6_address
+          addr.connection_id = connection_id
+          addr.stateless_reset_token = stateless_reset_token
+        end
       end
 
-      def push_quic_preferred_address
-        raise NotImplementedError
+      def self.push_quic_preferred_address(buf:, preferred_address:)
+        if preferred_address[:ipv4_address]
+          buf.push_bytes(preferred_address[:ipv4_address][:host].hton)
+          buf.push_uint16(preferred_address[:ipv4_address][:port])
+        else
+          buf.push_bytes("\x00\x00\x00\x00\x00\x00")
+        end
+
+        if preferred_address[:ipv6_address]
+          buf.push_bytes(preferred_address[:ipv6_address][:host].hton)
+          buf.push_uint16(preferred_address[:ipv6_address][:port])
+        else
+          buf.push_bytes("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00")
+        end
+
+        buf.push_uint8(preferred_address[:connection_id].bytesize)
+        buf.push_bytes(preferred_address[:connection_id])
+        buf.push_bytes(preferred_address[:stateless_reset_token])
       end
 
-      def pull_quic_transport_parameters
-        raise NotImplementedError
+      def self.pull_quic_transport_parameters(buf)
+        params = QuicTransportParameters.new
+        while !buf.eof
+          param_id = buf.pull_uint_var
+          param_len = buf.pull_uint_var
+          param_start = buf.tell
+          if PARAMS.has_key? param_id
+            param = PARAMS[param_id]
+            if    param[:type] == :int
+              params[param[:name]] = buf.pull_uint_var
+            elsif param[:type] == :bytes
+              params[param[:name]] = buf.pull_bytes(param_len)
+            elsif param[:type] == :quicpreferredaddress
+              params[param[:name]] = pull_quic_preferred_address(buf)
+            else
+              params[param[:name]] = true
+            end
+          else
+            # skip unknown parameter
+            buf.pull_bytes(param_len)
+          end
+          raise RuntimeError if buf.tell != param_start + param_len
+        end
+        params
       end
 
-      def push_quic_transport_parameters
-        raise NotImplementedError
+      def self.push_quic_transport_parameters(buf:, params:)
+        PARAMS.each do |param_id, param_obj|
+          param_value = params[param_obj[:name]]
+          if param_value
+            param_buf = Buffer.new(capacity: 65536)
+            if param_obj[:type] == :int
+              param_buf.push_uint_var(param_value)
+            elsif param_obj[:type] == :bytes
+              param_buf.push_bytes(param_value)
+            elsif param_obj[:type] == :quicpreferredaddress
+              push_quic_preferred_address(buf: param_buf, preferred_address: param_value)
+            end
+            buf.push_uint_var(param_id)
+            buf.push_uint_var(param_buf.tell)
+            buf.push_bytes(param_buf.data)
+          end
+        end
       end
 
       class QuicFrameType
@@ -196,12 +435,40 @@ module Raioquic
         attr_accessor :offset
       end
 
-      def pull_ack_frame
-        raise NotImplementedError
+      def self.pull_ack_frame(buf)
+        rangeset = Rangeset.new
+        ends = buf.pull_uint_var # largeset acknowledged
+        delay = buf.pull_uint_var
+        ack_range_count = buf.pull_uint_var
+        ack_count = buf.pull_uint_var # first ack range
+        rangeset.add(ends - ack_count, ends + 1)
+        ends -= ack_count
+        ack_range_count.times do
+          ends -= buf.pull_uint_var + 2
+          ack_count = buf.pull_uint_var
+          rangeset.add(ends - ack_count, ends + 1)
+          ends -= ack_count
+        end
+        [rangeset, delay]
       end
 
-      def push_ack_frame
-        raise NotImplementedError
+      def self.push_ack_frame(buf:, rangeset:, delay:)
+        ranges = rangeset.length
+        index = ranges - 1
+        r = rangeset.list[index]
+        buf.push_uint_var(r.last - 1)
+        buf.push_uint_var(delay)
+        buf.push_uint_var(index)
+        buf.push_uint_var(r.last - 1 - r.first)
+        start = r.first
+        while index > 0
+          index -= 1
+          r = rangeset.list[index]
+          buf.push_uint_var(start - r.last - 1)
+          buf.push_uint_var(r.last - r.first - 1)
+          start = r.first
+        end
+        return ranges
       end
     end
   end
