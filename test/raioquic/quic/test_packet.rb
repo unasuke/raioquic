@@ -192,12 +192,25 @@ class TestRaioquicQuicPacket < Minitest::Test
   def test_params
     data = [
       "010267100210cc2fd6e7d97a53ab5be85b28d75c8008030247e404048005fff" +
-      "a05048000ffff06048000ffff0801060a01030b0119"
+        "a05048000ffff06048000ffff0801060a01030b0119"
     ].pack("H*")
 
     buf = Raioquic::Buffer.new(data: data)
     params = Packet.pull_quic_transport_parameters(buf)
-    assert_equal QuicTransportParameters(), params
+    expected_params = Raioquic::Quic::Packet::QuicTransportParameters.new.tap do |params|
+      params[:max_idle_timeout] = 10000
+      params[:stateless_reset_token] = ["cc2fd6e7d97a53ab5be85b28d75c8008"].pack("H*")
+      params[:max_udp_payload_size] = 2020
+      params[:initial_max_data] = 393210
+      params[:initial_max_stream_data_bidi_local] = 65535
+      params[:initial_max_stream_data_bidi_remote] = 65535
+      params[:initial_max_stream_data_uni] = nil
+      params[:initial_max_streams_bidi] = 6
+      params[:initial_max_streams_uni] = nil
+      params[:ack_delay_exponent] = 3
+      params[:max_ack_delay] = 25
+    end
+    assert_equal expected_params, params
 
     buf = Raioquic::Buffer.new(capacity: data.length)
     Packet.push_quic_transport_parameters(buf: buf, params: params)
@@ -220,14 +233,22 @@ class TestRaioquicQuicPacket < Minitest::Test
   end
 
   def test_params_preferred_address
-    skip "buffer read error"
-    data = [<<~BIN].pack("H*")
-      0d3b8ba27b8611532400890200000000f03c91fffe69a45411531262c4518d63013f0c287ed3573efa9095603746b2e02d45480ba6643e5c6e7d48ecb4
-    BIN
+    data = [
+      "0d3b8ba27b8611532400890200000000f03c91fffe69a45411531262c4518d6" +
+        "3013f0c287ed3573efa9095603746b2e02d45480ba6643e5c6e7d48ecb4"
+    ].pack("H*")
 
     buf = Raioquic::Buffer.new(data: data)
     params = Packet.pull_quic_transport_parameters(buf)
-    assert_equal QuicTransportParameters(), params # TODO:
+    expected_params = Raioquic::Quic::Packet::QuicTransportParameters.new.tap do |params|
+      params[:preferred_address] = Raioquic::Quic::Packet::QuicPreferredAddress.new.tap do |address|
+        address[:ipv4_address] = { host: IPAddr.new("139.162.123.134"), port: 4435 }
+        address[:ipv6_address] = { host: IPAddr.new("2400:8902::f03c:91ff:fe69:a454"), port: 4435 }
+        address[:connection_id] = ["62c4518d63013f0c287ed3573efa90956037"].pack("H*")
+        address[:stateless_reset_token] = ["46b2e02d45480ba6643e5c6e7d48ecb4"].pack("H*")
+      end
+    end
+    assert_equal expected_params, params
 
     buf = Raioquic::Buffer.new(capacity: 1000)
     Packet.push_quic_transport_parameters(buf: buf, params: params)
