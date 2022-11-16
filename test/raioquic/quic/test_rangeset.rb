@@ -211,6 +211,7 @@ class TestRaioquicQuicRangeset < Minitest::Test
   end
 
   def test_eq
+    # rubocop:disable Lint/BinaryOperatorWithIdenticalOperands
     r0 = Rangeset.new(ranges: [0...1])
     r1 = Rangeset.new(ranges: [1...2, 3...4])
     r2 = Rangeset.new(ranges: [3...4, 1...2])
@@ -228,6 +229,7 @@ class TestRaioquicQuicRangeset < Minitest::Test
     assert_equal true, r2 == r1
     assert_equal false, r2 == r0
     assert_equal false, r2 == 0
+    # rubocop:enable Lint/BinaryOperatorWithIdenticalOperands
   end
 
   def test_len
