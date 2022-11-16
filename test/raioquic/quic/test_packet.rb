@@ -88,7 +88,7 @@ class TestRaioquicQuicPacket < Minitest::Test
       ].pack("H*"), header.token
     assert_equal ["4620aafd42f1d630588b27575a12da5c"].pack("H*"), header.integrity_tag
     assert_equal 0, header.rest_length
-    assert_qeual 125, buf.tell
+    assert_equal 125, buf.tell
 
     encoded = encode_quic_retry(
       version: header.version,
