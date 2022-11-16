@@ -126,18 +126,20 @@ class TestRaioquicQuicPacket < Minitest::Test
   end
 
   def test_pull_long_header_dcid_too_long
-    buf = Raioquic::Buffer.new(data: [<<~DATA].pack("H*"))
-      c6ff000016150000000000000000000000000000000000000000000000401c514f99ec4bbf1f7a30f9b0c94fef717f1c1d07fec24c99a864da7ede
-    DATA
+    buf = Raioquic::Buffer.new(data: [
+      "c6ff0000161500000000000000000000000000000000000000000000004" +
+        "01c514f99ec4bbf1f7a30f9b0c94fef717f1c1d07fec24c99a864da7ede"
+    ].pack("H*"))
     assert_raises Raioquic::ValueError, "Destination CID is too long (21 bytes)" do
       Packet.pull_quic_header(buf: buf, host_cid_length: 8)
     end
   end
 
   def test_pull_long_header_scid_too_long
-    buf = Raioquic::Buffer.new(data: [<<~DATA].pack("H*"))
-      c2ff000016001500000000000000000000000000000000000000000000401cfcee99ec4bbf1f7a30f9b0c9417b8c263cdd8cc972a4439d68a46320
-    DATA
+    buf = Raioquic::Buffer.new(data: [
+      "c2ff0000160015000000000000000000000000000000000000000000004" +
+        "01cfcee99ec4bbf1f7a30f9b0c9417b8c263cdd8cc972a4439d68a46320"
+    ].pack("H*"))
     assert_raises Raioquic::ValueError, "Source CID is too long (21 bytes)" do
       Packet.pull_quic_header(buf: buf, host_cid_length: 8)
     end
