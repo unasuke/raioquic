@@ -2,6 +2,12 @@ AllCops:
   TargetRubyVersion: 3.0
   NewCops: enable
 
+Metrics/AbcSize:
+  Enabled: false
+
+Metrics/MethodLength:
+  Max: 30
+
 Naming/AccessorMethodName:
   Enabled: false # for pythonic
 
@@ -10,6 +16,9 @@ Naming/PredicateName:
 
 Style/AccessorGrouping:
   EnforcedStyle: separated
+
+Style/LineEndConcatenation:
+  Enabled: false
 
 Style/StringLiterals:
   Enabled: true
@@ -20,7 +29,7 @@ Style/StringLiteralsInInterpolation:
   EnforcedStyle: double_quotes
 
 Style/NumericPredicate:
-  Enable: false
+  Enabled: false
 
 Layout/LineLength:
   Max: 120
