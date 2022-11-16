@@ -79,7 +79,7 @@ class TestRaioquicQuicPacket < Minitest::Test
     assert_equal true, header.is_long_header
     assert_equal Raioquic::Quic::Packet::QuicProtocolVersion::VERSION_1, header.version
     assert_equal Raioquic::Quic::Packet::PACKET_TYPE_RETRY, header.packet_type
-    assert_equal ["e9d146d8d14cb28e"].pack("H*"), header.destination_cid # TODO:
+    assert_equal ["e9d146d8d14cb28e"].pack("H*"), header.destination_cid
     assert_equal ["0b0a205a648fcf82d85f128b67bbe08053e6"].pack("H*"), header.source_cid
     assert_equal [
       "44397a35d698393c134b08a932737859f446d3aadd00ed81540c8d8de172" +
