@@ -81,9 +81,11 @@ class TestRaioquicQuicPacket < Minitest::Test
     assert_equal Raioquic::Quic::Packet::PACKET_TYPE_RETRY, header.packet_type
     assert_equal ["e9d146d8d14cb28e"].pack("H*"), header.destination_cid # TODO:
     assert_equal ["0b0a205a648fcf82d85f128b67bbe08053e6"].pack("H*"), header.source_cid
-    assert_equal [<<~TOKEN].pack("H*"), header.token
-      44397a35d698393c134b08a932737859f446d3aadd00ed81540c8d8de172906d3e7a111b503f9729b8928e7528f9a86a4581f9ebb4cb3b53c283661e8530741a99192ee56914c5626998ec0f
-    TOKEN
+    assert_equal [
+      "44397a35d698393c134b08a932737859f446d3aadd00ed81540c8d8de172" +
+        "906d3e7a111b503f9729b8928e7528f9a86a4581f9ebb4cb3b53c283661e" +
+        "8530741a99192ee56914c5626998ec0f"
+      ].pack("H*"), header.token
     assert_equal ["4620aafd42f1d630588b27575a12da5c"].pack("H*"), header.integrity_tag
     assert_equal 0, header.rest_length
     assert_qeual 125, buf.tell
@@ -187,10 +189,10 @@ class TestRaioquicQuicPacket < Minitest::Test
   end
 
   def test_params
-    skip "pending"
-    data = [<<~BIN].pack("H*")
-      010267100210cc2fd6e7d97a53ab5be85b28d75c8008030247e404048005fffa05048000ffff06048000ffff0801060a01030b0119
-    BIN
+    data = [
+      "010267100210cc2fd6e7d97a53ab5be85b28d75c8008030247e404048005fff" +
+      "a05048000ffff06048000ffff0801060a01030b0119"
+    ].pack("H*")
 
     buf = Raioquic::Buffer.new(data: data)
     params = Packet.pull_quic_transport_parameters(buf)
@@ -239,9 +241,10 @@ class TestRaioquicQuicPacket < Minitest::Test
   end
 
   def test_preferred_address_ipv4_only
-    data = [<<~BIN].pack("H*")
-      8ba27b8611530000000000000000000000000000000000001262c4518d63013f0c287ed3573efa9095603746b2e02d45480ba6643e5c6e7d48ecb4
-    BIN
+    data = [
+      "8ba27b8611530000000000000000000000000000000000001262c4518d6" +
+        "3013f0c287ed3573efa9095603746b2e02d45480ba6643e5c6e7d48ecb4"
+    ].pack("H*").force_encoding(Encoding::ASCII_8BIT)
 
     buf = Raioquic::Buffer.new(data: data)
     preferred_address = Packet.pull_quic_preferred_address(buf)
@@ -259,9 +262,11 @@ class TestRaioquicQuicPacket < Minitest::Test
   end
 
   def test_preferred_address_ipv6_only
-    data = [<<~BIN].pack("H*")
-      0000000000002400890200000000f03c91fffe69a45411531262c4518d63013f0c287ed3573efa9095603746b2e02d45480ba6643e5c6e7d48ecb4
-    BIN
+    data = [
+      "0000000000002400890200000000f03c91fffe69a45411531262c4518d63013" +
+        "f0c287ed3573efa9095603746b2e02d45480ba6643e5c6e7d48ecb4"
+    ].pack("H*").force_encoding(Encoding::ASCII_8BIT)
+
     buf = Raioquic::Buffer.new(data: data)
     preferred_address = Packet.pull_quic_preferred_address(buf)
     expected = Raioquic::Quic::Packet::QuicPreferredAddress.new.tap do |address|
