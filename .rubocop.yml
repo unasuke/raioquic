@@ -5,6 +5,10 @@ AllCops:
 Metrics/AbcSize:
   Enabled: false
 
+Metrics/ClassLength:
+  Exclude:
+    - "test/**/test_*.rb"
+
 Metrics/MethodLength:
   Max: 30
 
@@ -14,8 +18,15 @@ Naming/AccessorMethodName:
 Naming/PredicateName:
   Enabled: false # for pythonic
 
+Naming/VariableNumber:
+  Exclude:
+    - "test/**/test_*.rb"
+
 Style/AccessorGrouping:
   EnforcedStyle: separated
+
+Style/AccessModifierDeclarations:
+  EnforcedStyle: inline
 
 Style/LineEndConcatenation:
   Enabled: false
@@ -28,7 +39,14 @@ Style/StringLiteralsInInterpolation:
   Enabled: true
   EnforcedStyle: double_quotes
 
+Style/NumericLiterals:
+  Enabled: false
+
 Style/NumericPredicate:
+  Enabled: false
+
+# I need to write 'return' explicitly sometime
+Style/RedundantReturn:
   Enabled: false
 
 Layout/LineLength:
