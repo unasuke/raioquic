@@ -12,8 +12,8 @@ module Raioquic
 
     UINT_VAR_MAX_SIZE = 8
 
-    def_delegators :@buffer, :eof, :eof
-    def_delegators :@buffer, :tell, :tell
+    def_delegator :@buffer, :eof, :eof
+    def_delegator :@buffer, :tell, :tell
 
     # Encode a variable-length unsigned integer.
     def self.encode_uint_var(value)
