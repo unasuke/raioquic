@@ -48,7 +48,7 @@ module Raioquic
         @ranges.first&.first...@ranges.last&.last
       end
 
-      def subtract(start, stop)
+      def subtract(start, stop) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
         raise RuntimeError if stop < start
 
         i = 0
