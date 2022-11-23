@@ -1,0 +1,20 @@
+module Raioquic
+  module Crypto
+    class AESGCM
+      MAX_SIZE: Numeric
+
+      class OverflowError < StandardError
+      end
+
+      attr_reader key: ::String
+
+      def initialize: (String) -> void
+      def encrypt: (nonce: ::String, data: ::String, associated_data: ::String) -> ::String
+                 | (nonce: ::String, data: ::String) -> ::String
+      def decrypt: (nonce: ::String, data: ::String, associated_data: ::String) -> ::String
+                 | (nonce: ::String, data: ::String) -> ::String
+      def validate_length: (nonce: ::String, data: ::String) -> void
+      def check_nonce: (::String) -> void
+    end
+  end
+end

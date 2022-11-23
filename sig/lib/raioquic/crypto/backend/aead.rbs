@@ -1,0 +1,11 @@
+module Raioquic
+  module Crypto
+    module Backend
+      class Aead
+        def self.aead_cipher_name: (::Raioquic::Crypto::AESGCM | untyped) -> String
+        def self.encrypt: (cipher: untyped, key: String, nonce: String, data: String, associated_data: Array[String?], tag_length: Integer) -> String
+        def self.decrypt: (cipher: untyped, key: String, nonce: String, data: String, associated_data: Array[String?], tag_length: Integer) -> String
+      end
+    end
+  end
+end

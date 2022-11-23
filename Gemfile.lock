@@ -1,3 +1,10 @@
+GIT
+  remote: https://github.com/unasuke/openssl.git
+  revision: 1d7a22154b6ed95eef00840ab3c9b2622d9fe421
+  branch: empty_string_to_cipher_update
+  specs:
+    openssl (3.1.0.pre)
+
 PATH
   remote: .
   specs:
@@ -74,6 +81,7 @@ PLATFORMS
 DEPENDENCIES
   minitest (~> 5.0)
   minitest-reporters
+  openssl!
   raioquic!
   rake (~> 13.0)
   rubocop (~> 1.21)

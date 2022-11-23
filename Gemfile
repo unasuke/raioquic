@@ -14,3 +14,5 @@ gem "minitest-reporters"
 gem "rubocop", "~> 1.21"
 
 gem "steep"
+
+gem "openssl", git: "https://github.com/unasuke/openssl.git", branch: "empty_string_to_cipher_update"
