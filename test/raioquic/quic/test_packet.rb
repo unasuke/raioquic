@@ -73,7 +73,7 @@ class TestRaioquicQuicPacket < Minitest::Test
 
   def test_pull_retry
     original_destination_cid = ["fbbd219b7363b64b"].pack("H*")
-    data = File.read("test/samples/retry.bin")
+    data = File.read("test/samples/retry.bin").force_encoding(Encoding::ASCII_8BIT)
     buf = Raioquic::Buffer.new(data: data)
     header = Packet.pull_quic_header(buf: buf, host_cid_length: 8)
     assert_equal true, header.is_long_header
@@ -97,8 +97,6 @@ class TestRaioquicQuicPacket < Minitest::Test
       original_destination_cid: original_destination_cid,
       retry_token: header.token
     )
-    skip
-    # TODO: bob.bin
     assert_equal data, encoded
   end
 

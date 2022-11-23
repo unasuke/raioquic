@@ -2,6 +2,7 @@
 
 require_relative "../buffer"
 require_relative "rangeset"
+require_relative "../crypto/aesgcm"
 require "socket"
 require "ipaddr"
 
@@ -21,8 +22,8 @@ module Raioquic
 
       CONNECTION_ID_MAX_SIZE = 20
       PACKET_NUMBER_MAX_SIZE = 4
-      RETRY_AEAD_KEY_VERSION_1 = "" # TODO: https://www.rfc-editor.org/rfc/rfc9001.html#section-5.8
-      RETRY_AEAD_NONCE_VERSION_1 = "" # TODO: https://www.rfc-editor.org/rfc/rfc9001.html#section-5.8
+      RETRY_AEAD_KEY_VERSION_1 = ["be0c690b9f66575a1d766b54e368c84e"].pack("H*") # https://www.rfc-editor.org/rfc/rfc9001.html#section-5.8
+      RETRY_AEAD_NONCE_VERSION_1 = ["461599d35d632bf2239825bb"].pack("H*") # https://www.rfc-editor.org/rfc/rfc9001.html#section-5.8
       RETRY_INTEGRITY_TAG_SIZE = 16
       STATELESS_RESET_TOKEN_SIZE = 16
 
@@ -86,6 +87,11 @@ module Raioquic
         buf.push_bytes(packet_without_tag)
         aead_key = RETRY_AEAD_KEY_VERSION_1
         aead_nonce = RETRY_AEAD_NONCE_VERSION_1
+        aead = ::Raioquic::Crypto::AESGCM.new(aead_key)
+        integrity_tag = aead.encrypt(nonce: aead_nonce, data: "", associated_data: buf.data)
+        raise RuntimeError if integrity_tag.length != RETRY_INTEGRITY_TAG_SIZE
+
+        integrity_tag
       end
 
       def self.get_spin_bit(first_byte)
@@ -212,41 +218,14 @@ module Raioquic
       end
       private_class_method :get_urandom_byte
 
-      # class QuicPreferredAddress
-      #   attr_accessor :ipv4_address
-      #   attr_accessor :ipv6_address
-      #   attr_accessor :connection_id
-      #   attr_accessor :stateless_reset_token
-      # end
-      QuicPreferredAddress = Struct.new(
+      QuicPreferredAddress = _ = Struct.new(
         :ipv4_address,
         :ipv6_address,
         :connection_id,
         :stateless_reset_token,
       )
 
-      # class QuicTransportParameters
-      #   attr_accessor :original_destination_connection_id
-      #   attr_accessor :max_idle_timeout
-      #   attr_accessor :stateless_reset_token
-      #   attr_accessor :max_udp_payload_size
-      #   attr_accessor :initial_max_data
-      #   attr_accessor :initial_max_stream_data_bidi_local
-      #   attr_accessor :initial_max_stream_data_bidi_remote
-      #   attr_accessor :initial_max_stream_data_uni
-      #   attr_accessor :initial_max_streams_bidi
-      #   attr_accessor :initial_max_streams_uni
-      #   attr_accessor :ack_delay_exponent
-      #   attr_accessor :max_ack_delay
-      #   attr_accessor :disable_active_migration
-      #   attr_accessor :preferred_address
-      #   attr_accessor :active_connection_id_limit
-      #   attr_accessor :initial_source_connection_id
-      #   attr_accessor :retry_source_connection_id
-      #   attr_accessor :max_datagram_frame_size
-      #   attr_accessor :quantum_readiness
-      # end
-      QuicTransportParameters = Struct.new(
+      QuicTransportParameters = _ = Struct.new(
         :original_destination_connection_id,
         :max_idle_timeout,
         :stateless_reset_token,
