@@ -1,7 +1,7 @@
 GIT
-  remote: https://github.com/unasuke/openssl.git
-  revision: 1d7a22154b6ed95eef00840ab3c9b2622d9fe421
-  branch: empty_string_to_cipher_update
+  remote: https://github.com/ruby/openssl.git
+  revision: c1639f1b244eda238907881b3b007408192ed69f
+  ref: c1639f1b
   specs:
     openssl (3.1.0.pre)
 

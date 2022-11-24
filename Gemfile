@@ -17,4 +17,4 @@ gem "rubocop-rake", require: false
 
 gem "steep"
 
-gem "openssl", git: "https://github.com/unasuke/openssl.git", branch: "empty_string_to_cipher_update"
+gem "openssl", git: "https://github.com/ruby/openssl.git", ref: "c1639f1b"
