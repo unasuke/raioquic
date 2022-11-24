@@ -45,7 +45,7 @@ module Raioquic
       end
 
       def self.decode_packet_number: (truncated: Integer, num_bits: Integer, expected: Integer) -> Integer
-      def self.get_retry_integrity_tag: (packet_without_tag: String, original_destination_cid: String, version: Integer) -> String
+      def self.get_retry_integrity_tag: (packet_without_tag: String, original_destination_cid: String) -> String
       def self.get_spin_bit: (::Integer) -> bool
       def self.is_draft_version: (::Integer) -> FalseClass
       def self.is_long_header: (::Integer) -> bool
