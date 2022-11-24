@@ -12,6 +12,8 @@ gem "minitest", "~> 5.0"
 gem "minitest-reporters"
 
 gem "rubocop", "~> 1.21"
+gem "rubocop-minitest", require: false
+gem "rubocop-rake", require: false
 
 gem "steep"
 

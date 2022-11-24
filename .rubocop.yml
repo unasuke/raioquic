@@ -1,3 +1,7 @@
+require:
+  - rubocop-minitest
+  - rubocop-rake
+
 AllCops:
   TargetRubyVersion: 3.0
   NewCops: enable
@@ -6,11 +10,13 @@ Metrics/AbcSize:
   Enabled: false
 
 Metrics/ClassLength:
-  Exclude:
-    - "test/**/test_*.rb"
+  Enabled: false
 
 Metrics/MethodLength:
   Max: 30
+
+Metrics/ParameterLists:
+  Enabled: false
 
 Naming/AccessorMethodName:
   Enabled: false # for pythonic
@@ -28,6 +34,9 @@ Style/AccessorGrouping:
 Style/AccessModifierDeclarations:
   EnforcedStyle: inline
 
+Style/KeywordParametersOrder:
+  Enabled: false
+
 Style/LineEndConcatenation:
   Enabled: false
 
@@ -39,6 +48,18 @@ Style/StringLiteralsInInterpolation:
   Enabled: true
   EnforcedStyle: double_quotes
 
+Style/TrailingCommaInArguments:
+  Enabled: true
+  EnforcedStyleForMultiline: consistent_comma
+
+Style/TrailingCommaInArrayLiteral:
+  Enabled: false
+  # EnforcedStyleForMultiline: consistent_comma
+
+Style/TrailingCommaInHashLiteral:
+  Enabled: true
+  EnforcedStyleForMultiline: consistent_comma
+
 Style/NumericLiterals:
   Enabled: false
 
@@ -49,5 +70,14 @@ Style/NumericPredicate:
 Style/RedundantReturn:
   Enabled: false
 
+Style/ZeroLengthPredicate:
+  Enabled: false
+
 Layout/LineLength:
-  Max: 120
+  Max: 150
+
+Minitest/EmptyLineBeforeAssertionMethods:
+  Enabled: false
+
+Minitest/RefuteFalse:
+  Enabled: false

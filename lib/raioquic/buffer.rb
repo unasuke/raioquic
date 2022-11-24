@@ -4,6 +4,8 @@ require "stringio"
 require "forwardable"
 
 module Raioquic
+  # Raioquic::Buffer
+  # Migrated from auiquic/src/aioquic/buffer.py
   class Buffer
     extend Forwardable
 
@@ -15,9 +17,11 @@ module Raioquic
     def_delegator :@buffer, :eof, :eof
     def_delegator :@buffer, :tell, :tell
 
+    attr_reader :capacity
+
     # Encode a variable-length unsigned integer.
     def self.encode_uint_var(value)
-      buf = self.new(capacity: UINT_VAR_MAX_SIZE)
+      buf = new(capacity: UINT_VAR_MAX_SIZE)
       buf.push_uint_var(value)
       buf.data
     end
@@ -43,16 +47,15 @@ module Raioquic
       raise BufferReadError
     end
 
-    def capacity
-      @capacity
-    end
+    # def capacity
+    #   @capacity
+    # end
 
     # NOTE: "end" is reserved keyword in Ruby
     def data_slice(start:, ends:)
       orig_str = @buffer.string
-      if start < 0 || @buffer.size < start || ends < 0 || @buffer.size < ends || ends < start
-        raise BufferReadError, "Read out of bounds"
-      end
+
+      raise BufferReadError, "Read out of bounds" if start < 0 || @buffer.size < start || ends < 0 || @buffer.size < ends || ends < start
 
       orig_str.byteslice(start, ends - start)
     end
@@ -60,6 +63,7 @@ module Raioquic
     # Pull bytes.
     def pull_bytes(length)
       raise BufferReadError if @buffer.size < 1
+
       @buffer.read(length)
     rescue EOFError, ArgumentError
       raise BufferReadError
@@ -125,6 +129,7 @@ module Raioquic
 
     def push_bytes(value)
       raise BufferWriteError if value.bytesize > [@buffer.size, @capacity].max
+
       @buffer << value
     end
 
@@ -176,7 +181,7 @@ module Raioquic
     # Return the number of bytes required to encode the given value
     # as a QUIC variable-length unsigned integer.
     def size_uint_var(value)
-      if value <= 0x3f
+      if value <= 0x3f # rubocop:disable Style/GuardClause
         return 1
       elsif value <= 0x3fff
         return 2

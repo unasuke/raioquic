@@ -2,6 +2,8 @@
 
 module Raioquic
   module Quic
+    # Raioquic::Quic::Rangeset
+    # Migrated from aioquic/src/aioquic/quic/rangeset.py
     class Rangeset
       def initialize(ranges: [])
         @ranges = []
@@ -16,14 +18,13 @@ module Raioquic
       end
 
       def add(start, stop = nil)
-        if stop.nil?
-          stop = start + 1
-        end
+        stop = start + 1 if stop.nil?
+
         @ranges.each_with_index do |r, i|
           # the added range is entirely before current item, insert here
           if stop < r.first
             @ranges.insert(i, (start...stop))
-            return
+            return # rubocop:disable Lint/NonLocalExitFromIterator
           end
 
           # the added range is entirely after current item, keep looking
@@ -37,7 +38,7 @@ module Raioquic
             @ranges.delete_at(i + 1)
           end
           @ranges[i] = start...stop
-          return
+          return # rubocop:disable Lint/NonLocalExitFromIterator
         end
         # the added range is entirely after all existing items, append it
         @ranges << (start...stop)
@@ -102,7 +103,7 @@ module Raioquic
           @ranges[i] == other.list[i]
         end
       end
-      alias_method :==, :eql?
+      alias == eql?
 
       private def sort
         @ranges.sort! { |a, b| a.first <=> b.first }

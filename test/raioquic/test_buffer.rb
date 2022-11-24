@@ -159,7 +159,7 @@ class TestRaioquicBuffer < Minitest::Test
     assert_equal 4, buf.tell
 
     buf.seek(8)
-    assert_equal true, buf.eof
+    assert buf.eof
     assert_equal 8, buf.tell
 
     assert_raises Raioquic::Buffer::BufferReadError do

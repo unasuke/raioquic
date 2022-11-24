@@ -4,8 +4,9 @@ require "openssl"
 
 module Raioquic
   module Crypto
-    # Raioquic's Crypto::Backend is only OpenSSL
     module Backend
+      # Raioquic's Crypto::Backend is only OpenSSL
+      # Migrated from pyca/cryptography/src/cryptography/hazmat/backends/openssl/aead.py
       class Aead
         def self.aead_cipher_name(cipher)
           case cipher

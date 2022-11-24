@@ -8,6 +8,8 @@ require "ipaddr"
 
 module Raioquic
   module Quic
+    # Raioquic::Quic::Packet
+    # Migrated from aioquic/src/aioquic/quic/packet.py
     class Packet
       PACKET_LONG_HEADER = 0x80
       PACKET_FIXED_BIT = 0x40
@@ -80,7 +82,7 @@ module Raioquic
       end
 
       # Calculate the integrity tag for a RETRY packet.
-      def self.get_retry_integrity_tag(packet_without_tag:, original_destination_cid:, version:)
+      def self.get_retry_integrity_tag(packet_without_tag:, original_destination_cid:)
         buf = Buffer.new(capacity: 1 + original_destination_cid.size + packet_without_tag.size)
         buf.push_uint8(original_destination_cid.size)
         buf.push_bytes(original_destination_cid)
@@ -98,7 +100,7 @@ module Raioquic
         (first_byte & PACKET_SPIN_BIT) != 0
       end
 
-      def self.is_draft_version(version)
+      def self.is_draft_version(_version)
         return false # raioquic drops draft version's implementation
       end
 
@@ -106,7 +108,7 @@ module Raioquic
         (first_byte & PACKET_LONG_HEADER) != 0
       end
 
-      def self.pull_quic_header(buf:, host_cid_length:)
+      def self.pull_quic_header(buf:, host_cid_length:) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
         first_byte = buf.pull_uint8
         integrity_tag = ""
         token = ""
@@ -114,25 +116,22 @@ module Raioquic
         if is_long_header(first_byte)
           version = buf.pull_uint32
           destination_cid_length = buf.pull_uint8
-          if destination_cid_length > CONNECTION_ID_MAX_SIZE
-            raise ValueError, "Destination CID is too long (#{destination_cid_length} bytes)"
-          end
+          raise ValueError, "Destination CID is too long (#{destination_cid_length} bytes)" if destination_cid_length > CONNECTION_ID_MAX_SIZE
+
           destination_cid = buf.pull_bytes(destination_cid_length)
           source_cid_length = buf.pull_uint8
-          if source_cid_length > CONNECTION_ID_MAX_SIZE
-            raise ValueError, "Souce CID is too long (#{source_cid_length} bytes)"
-          end
+          raise ValueError, "Souce CID is too long (#{source_cid_length} bytes)" if source_cid_length > CONNECTION_ID_MAX_SIZE
 
           source_cid = buf.pull_bytes(source_cid_length)
 
           if version == QuicProtocolVersion::NEGOTIATION
             packet_type = nil
-            rest_length = buf.capacity - buf.tell # TODO:
+            rest_length = buf.capacity - buf.tell
           else
-            if (first_byte & PACKET_FIXED_BIT) == 0
-              raise ValueError, "Packet fixed bit is zero"
-            end
+            raise ValueError, "Packet fixed bit is zero" if (first_byte & PACKET_FIXED_BIT) == 0
+
             packet_type = first_byte & PACKET_TYPE_MASK
+            # rubocop:disable Style/CaseLikeIf
             if packet_type == PACKET_TYPE_INITIAL
               token_length = buf.pull_uint_var
               token = buf.pull_bytes(token_length)
@@ -147,15 +146,13 @@ module Raioquic
             end
 
             # check remainder length
-            if rest_length > buf.capacity - buf.tell
-              raise ValueError, "Packet payload is truncated"
-            end
+            raise ValueError, "Packet payload is truncated" if rest_length > buf.capacity - buf.tell
           end
 
           return QuicHeader.new.tap do |hdr|
             hdr.is_long_header = true
             hdr.version = version
-            hdr.packet_type= packet_type
+            hdr.packet_type = packet_type
             hdr.destination_cid = destination_cid
             hdr.source_cid = source_cid
             hdr.token = token
@@ -164,9 +161,8 @@ module Raioquic
           end
         else
           # short header packet
-          if (first_byte & PACKET_FIXED_BIT) == 0
-            raise ValueError, "Packet fixed bit is zero"
-          end
+          raise ValueError, "Packet fixed bit is zero" if (first_byte & PACKET_FIXED_BIT) == 0
+
           packet_type = first_byte & PACKET_TYPE_MASK
           destination_cid = buf.pull_bytes(host_cid_length)
 
@@ -192,15 +188,13 @@ module Raioquic
         buf.push_uint8(source_cid.length)
         buf.push_bytes(source_cid)
         buf.push_bytes(retry_token)
-        buf.push_bytes(
-          get_retry_integrity_tag(packet_without_tag: buf.data, original_destination_cid: original_destination_cid, version: version)
-        )
+        buf.push_bytes(get_retry_integrity_tag(packet_without_tag: buf.data, original_destination_cid: original_destination_cid))
 
         return buf.data
       end
 
       def self.encode_quic_version_negotiation(source_cid:, destination_cid:, supported_versions:)
-        buf = Buffer.new(capacity: 7 + destination_cid.length + source_cid.length + 4 * supported_versions.length)
+        buf = Buffer.new(capacity: 7 + destination_cid.length + source_cid.length + (4 * supported_versions.length))
         buf.push_uint8(get_urandom_byte | PACKET_LONG_HEADER)
         buf.push_uint32(QuicProtocolVersion::NEGOTIATION)
         buf.push_uint8(destination_cid.length)
@@ -213,19 +207,20 @@ module Raioquic
         buf.data
       end
 
-      def self.get_urandom_byte # private
+      # private
+      def self.get_urandom_byte
         Random.urandom(1)[0].unpack1("C")
       end
       private_class_method :get_urandom_byte
 
-      QuicPreferredAddress = _ = Struct.new(
+      QuicPreferredAddress = _ = Struct.new( # rubocop:disable Naming/ConstantName
         :ipv4_address,
         :ipv6_address,
         :connection_id,
         :stateless_reset_token,
       )
 
-      QuicTransportParameters = _ = Struct.new(
+      QuicTransportParameters = _ = Struct.new( # rubocop:disable Naming/ConstantName
         :original_destination_connection_id,
         :max_idle_timeout,
         :stateless_reset_token,
@@ -268,13 +263,14 @@ module Raioquic
         # extensions
         0x0020 => { name: :max_datagram_frame_size, type: :int },
         0x0c37 => { name: :quantum_readiness, type: :bytes },
-      }
+      }.freeze
 
       def self.pull_quic_preferred_address(buf)
         ipv4_address = nil
         ipv4_host = buf.pull_bytes(4)
         ipv4_port = buf.pull_uint16
 
+        # rubocop:disable Style/IfUnlessModifier
         if ipv4_host != "\x00\x00\x00\x00"
           ipv4_address = { host: IPAddr.new_ntoh(ipv4_host), port: ipv4_port }
         end
@@ -286,6 +282,7 @@ module Raioquic
         if ipv6_host != "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
           ipv6_address = { host: IPAddr.new_ntoh(ipv6_host), port: ipv6_port }
         end
+        # rubocop:enable Style/IfUnlessModifier
 
         connection_id_length = buf.pull_uint8
         connection_id = buf.pull_bytes(connection_id_length)
@@ -319,14 +316,15 @@ module Raioquic
         buf.push_bytes(preferred_address[:stateless_reset_token])
       end
 
-      def self.pull_quic_transport_parameters(buf)
+      def self.pull_quic_transport_parameters(buf) # rubocop:disable Metrics/PerceivedComplexity
         params = QuicTransportParameters.new
-        while !buf.eof
+        while !buf.eof # rubocop:disable Style/NegatedWhile
           param_id = buf.pull_uint_var
           param_len = buf.pull_uint_var
           param_start = buf.tell
-          if PARAMS.has_key? param_id
+          if PARAMS.key? param_id
             param = PARAMS[param_id]
+            # rubocop:disable Style/ConditionalAssignment
             if    param[:type] == :int
               params[param[:name]] = buf.pull_uint_var
             elsif param[:type] == :bytes
@@ -336,6 +334,7 @@ module Raioquic
             else
               params[param[:name]] = true
             end
+            # rubocop:enable Style/ConditionalAssignment
           else
             # skip unknown parameter
             buf.pull_bytes(param_len)
@@ -348,8 +347,9 @@ module Raioquic
       def self.push_quic_transport_parameters(buf:, params:)
         PARAMS.each do |param_id, param_obj|
           param_value = params[param_obj[:name]]
-          if param_value
+          if param_value # rubocop:disable Style/Next
             param_buf = Buffer.new(capacity: 65536)
+            # aaaa
             if param_obj[:type] == :int
               param_buf.push_uint_var(param_value)
             elsif param_obj[:type] == :bytes
@@ -357,6 +357,7 @@ module Raioquic
             elsif param_obj[:type] == :quicpreferredaddress
               push_quic_preferred_address(buf: param_buf, preferred_address: param_value)
             end
+            # rubocop:enable Style/CaseLikeIf
             buf.push_uint_var(param_id)
             buf.push_uint_var(param_buf.tell)
             buf.push_bytes(param_buf.data)
@@ -393,9 +394,25 @@ module Raioquic
         DATAGRAM_WITH_LENGTH = 0x31
       end
 
-      NON_ACK_ELICITING_FRAME_TYPES = [] # TODO:
-      NON_IN_FLIGHT_FRAME_TYPES = [] # TODO:
-      PROBING_FRAME_TYPES = [] # TODO:
+      NON_ACK_ELICITING_FRAME_TYPES = [
+        QuicFrameType::ACK,
+        QuicFrameType::ACK_ECN,
+        QuicFrameType::PADDING,
+        QuicFrameType::TRANSPORT_CLOSE,
+        QuicFrameType::APPLICATION_CLOSE,
+      ].freeze
+      NON_IN_FLIGHT_FRAME_TYPES = [
+        QuicFrameType::ACK,
+        QuicFrameType::ACK_ECN,
+        QuicFrameType::TRANSPORT_CLOSE,
+        QuicFrameType::APPLICATION_CLOSE,
+      ].freeze
+      PROBING_FRAME_TYPES = [
+        QuicFrameType::PATH_CHALLENGE,
+        QuicFrameType::PATH_RESPONSE,
+        QuicFrameType::PADDING,
+        QuicFrameType::NEW_CONNECTION_ID,
+      ].freeze
 
       class QuicResetStreamFrame
         attr_accessor :error_code

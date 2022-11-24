@@ -20,6 +20,7 @@ module Raioquic
         attr_accessor :sent_bytes
       end
 
+      # Helper for building QUIC packets.
       class QuicPacketBuilder
         attr_accessor :packet_number
 

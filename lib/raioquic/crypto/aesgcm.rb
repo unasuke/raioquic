@@ -4,28 +4,30 @@ require_relative "backend/aead"
 
 module Raioquic
   module Crypto
+    # Raioquic::Crypto::AESGCM
+    # Migrated from pyca/cryptography/src/cryptography/hazmat/primitives/ciphers/aead.py
     class AESGCM
       attr_reader :key
 
-      MAX_SIZE = 2**31 - 1
+      MAX_SIZE = (2**31) - 1
       OverflowError = Class.new(StandardError)
 
       def initialize(key)
         raise TypeError unless key.is_a? String
         raise ValueError, "AESGCM key must be 128, 192, or 256 bits." unless [16, 24, 32].include?(key.length)
+
         @key = key
       end
 
       def self.generate_key(bit_length)
         raise TypeError, "bit_length must be an integer" unless bit_length.is_a? Integer
         raise ValueError, "bit_length must be 128, 192, or 256" unless [128, 192, 256].include?(bit_length)
+
         Random.urandom(bit_length / 8)
       end
 
       def encrypt(nonce:, data:, associated_data: "")
-        if data.length > MAX_SIZE || associated_data&.length > MAX_SIZE
-          raise OverflowError, "Data or associated data too long. Max 2**31 - 1 bytes"
-        end
+        raise OverflowError, "Data or associated data too long. Max 2**31 - 1 bytes" if data.length > MAX_SIZE || associated_data.length > MAX_SIZE
 
         check_nonce(nonce)
         validate_length(nonce: nonce, data: data)

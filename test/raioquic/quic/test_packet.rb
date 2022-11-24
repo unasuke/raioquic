@@ -6,7 +6,7 @@ class TestRaioquicQuicPacket < Minitest::Test
   Packet = Raioquic::Quic::Packet
 
   def test_decode_packet_number
-    (0...256).each do |i|
+    (0...256).each do |i| # rubocop:disable Style/EachForSimpleLoop
       assert_equal i, Packet.decode_packet_number(truncated: i, num_bits: 8, expected: 0)
     end
 
@@ -21,7 +21,7 @@ class TestRaioquicQuicPacket < Minitest::Test
       assert_equal i, Packet.decode_packet_number(truncated: i, num_bits: 8, expected: 129)
     end
 
-    (0...128).each do |i|
+    (0...128).each do |i| # rubocop:disable Style/EachForSimpleLoop
       assert_equal 256 + i, Packet.decode_packet_number(truncated: i, num_bits: 8, expected: 256)
     end
     (129...256).each do |i|
@@ -39,7 +39,7 @@ class TestRaioquicQuicPacket < Minitest::Test
   def test_pull_initiali_client
     buf = Raioquic::Buffer.new(data: File.read("test/samples/initial_client.bin"))
     header = Packet.pull_quic_header(buf: buf, host_cid_length: 8)
-    assert_equal true, header.is_long_header
+    assert header.is_long_header
     assert_equal Raioquic::Quic::Packet::QuicProtocolVersion::VERSION_1, header.version
     assert_equal Raioquic::Quic::Packet::PACKET_TYPE_INITIAL, header.packet_type
     assert_equal ["858b39368b8e3c6e"].pack("H*"), header.destination_cid
@@ -60,7 +60,7 @@ class TestRaioquicQuicPacket < Minitest::Test
   def test_pull_initial_server
     buf = Raioquic::Buffer.new(data: File.read("test/samples/initial_server.bin"))
     header = Packet.pull_quic_header(buf: buf, host_cid_length: 8)
-    assert_equal true, header.is_long_header
+    assert header.is_long_header
     assert_equal Raioquic::Quic::Packet::QuicProtocolVersion::VERSION_1, header.version
     assert_equal Raioquic::Quic::Packet::PACKET_TYPE_INITIAL, header.packet_type
     assert_equal "", header.destination_cid
@@ -76,16 +76,16 @@ class TestRaioquicQuicPacket < Minitest::Test
     data = File.read("test/samples/retry.bin").force_encoding(Encoding::ASCII_8BIT)
     buf = Raioquic::Buffer.new(data: data)
     header = Packet.pull_quic_header(buf: buf, host_cid_length: 8)
-    assert_equal true, header.is_long_header
+    assert header.is_long_header
     assert_equal Raioquic::Quic::Packet::QuicProtocolVersion::VERSION_1, header.version
     assert_equal Raioquic::Quic::Packet::PACKET_TYPE_RETRY, header.packet_type
     assert_equal ["e9d146d8d14cb28e"].pack("H*"), header.destination_cid
     assert_equal ["0b0a205a648fcf82d85f128b67bbe08053e6"].pack("H*"), header.source_cid
     assert_equal [
-      "44397a35d698393c134b08a932737859f446d3aadd00ed81540c8d8de172" +
-        "906d3e7a111b503f9729b8928e7528f9a86a4581f9ebb4cb3b53c283661e" +
-        "8530741a99192ee56914c5626998ec0f"
-      ].pack("H*"), header.token
+      "44397a35d698393c134b08a932737859f446d3aadd00ed81540c8d8de172" \
+      "906d3e7a111b503f9729b8928e7528f9a86a4581f9ebb4cb3b53c283661e" \
+      "8530741a99192ee56914c5626998ec0f"
+    ].pack("H*"), header.token
     assert_equal ["4620aafd42f1d630588b27575a12da5c"].pack("H*"), header.integrity_tag
     assert_equal 0, header.rest_length
     assert_equal 125, buf.tell
@@ -95,7 +95,7 @@ class TestRaioquicQuicPacket < Minitest::Test
       source_cid: header.source_cid,
       destination_cid: header.destination_cid,
       original_destination_cid: original_destination_cid,
-      retry_token: header.token
+      retry_token: header.token,
     )
     assert_equal data, encoded
   end
@@ -107,7 +107,7 @@ class TestRaioquicQuicPacket < Minitest::Test
   def test_pull_version_negotiation
     buf = Raioquic::Buffer.new(data: File.read("test/samples/version_negotiation.bin"))
     header = Packet.pull_quic_header(buf: buf, host_cid_length: 8)
-    assert_equal true, header.is_long_header
+    assert header.is_long_header
     assert_equal Raioquic::Quic::Packet::QuicProtocolVersion::NEGOTIATION, header.version
     assert_nil header.packet_type
     assert_equal ["9aac5a49ba87a849"].pack("H*"), header.destination_cid
@@ -117,9 +117,7 @@ class TestRaioquicQuicPacket < Minitest::Test
     assert_equal 8, header.rest_length
     assert_equal 23, buf.tell
     versions = []
-    while !buf.eof do
-      versions << buf.pull_uint32 while !buf.eof
-    end
+    versions << buf.pull_uint32 until buf.eof
     assert_equal [0x45474716, Raioquic::Quic::Packet::QuicProtocolVersion::VERSION_1], versions
   end
 
@@ -182,7 +180,7 @@ class TestRaioquicQuicPacket < Minitest::Test
     data = Packet.encode_quic_version_negotiation(
       destination_cid: ["9aac5a49ba87a849"].pack("H*"),
       source_cid: ["f92f4336fa951ba1"].pack("H*"),
-      supported_versions: [0x45474716, Raioquic::Quic::Packet::QuicProtocolVersion::VERSION_1]
+      supported_versions: [0x45474716, Raioquic::Quic::Packet::QuicProtocolVersion::VERSION_1],
     )
     expected_data = File.read("test/samples/version_negotiation.bin")
     expected_data.force_encoding(Encoding::ASCII_8BIT)
