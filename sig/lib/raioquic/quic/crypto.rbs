@@ -1,0 +1,88 @@
+module Raioquic
+  module Quic
+    module Crypto
+      INITIAL_CIPHER_SUITE: untyped
+      AEAD_KEY_LENGTH_MAX: 32
+      AEAD_NONCE_LENGTH: 12
+      AEAD_TAG_LENGTH: 16
+      PACKET_LENGTH_MAX: 1500
+      PACKET_NUMBER_LENGTH_MAX: 4
+      SAMPLE_LENGTH: 16
+      INITIAL_SALT_VERSION_1: ::String
+
+
+      def self?.derive_key_iv_hp: (untyped, ::String) -> Array[::String]
+      def self?.xor_str: (::String, ::String) -> ::String
+
+      class CryptoError
+      end
+
+      class NoCallback
+      end
+
+      class CryptoContext
+        attr_reader aead: untyped
+        attr_reader key_phase: 0 | 1
+        attr_reader secret: nil | ::String
+        @aead: nil | AEAD
+        @cipher_suite: untyped # TODO: ?
+        @key_phase: 0 | 1
+        @secret: nil | ::String
+        @version: untyped # TODO: ::Raioquic::Quic::Packet::QuicProtocolVersion::VERSION_1
+        @setup_cb: NoCallback | untyped
+        @teardown_cb: NoCallback | untyped
+        @hp: HeaderProtection|nil
+
+        def initialize: (key_phase: 0|1, setup_cb: untyped, teardown_cb: untyped) -> void
+                      | (setup_cb: untyped, teardown_cb: untyped) -> void
+        def decrypt_packet: (packet: ::String, encrypted_offset: ::Integer, expected_packet_number: ::Integer) -> [::String, ::String, ::Integer, bool]
+        def encrypt_packet: (plain_header: ::String, plain_payload: ::String, packet_number: ::Integer) -> ::String
+        def is_valid: () -> bool
+        def setup: (cipher_suite: untyped, secret: ::String, version: untyped) -> void
+        def teardown: () -> void
+        def apply_key_phase: (CryptoContext, ::String) -> void
+        def next_key_phase: () -> CryptoContext
+      end
+
+      class CryptoPair
+        attr_reader recv: CryptoContext
+        attr_reader send: CryptoContext
+
+        @aead_tag_size: ::Integer
+        @update_key_requested: bool
+
+        def initialize: (recv_setup_cb: NoCallback|untyped, recv_teardown_cb: NoCallback|untyped, send_setup_cb: NoCallback|untyped, send_teardown_cb: NoCallback|untyped) -> void
+        def decrypt_packet: (packet: ::String, encrypted_offset: ::Integer, expected_packet_number: ::Integer) -> [::String, ::String, ::Integer]
+        def encrypt_packet: (plain_header: ::String, plain_payload: ::Integer, packet_number: ::Integer) -> ::String
+        def setup_initial: (cid: ::String, is_client: bool, version: untyped) -> void
+        def teardown: () -> void
+        def key_phase: () -> ::Integer # TODO: 0 or 1
+        def update_key: () -> void
+        def _update_key: (::String) -> void
+      end
+
+      class AEAD
+        @cipher: OpenSSL::Cipher
+        @key: ::String
+        @iv: ::String
+        @cipher_name: ::String
+
+        def initialize: (cipher_name: ::String, key: ::String, iv: ::String) -> void
+        def decrypt: (data: ::String, associated_data: ::String, packet_number: ::Integer) -> ::String
+        def encrypt: (data: ::String, associated_data: ::String, packet_number: ::Integer) -> ::String
+      end
+
+      class HeaderProtection
+        @cipher: OpenSSL::Cipher
+        @key: ::String
+        @mask: ::String
+        @zero: ::String
+
+        def initialize: (cipher_name: ::String, key: ::String) -> void
+        def apply: (plain_header: ::String, protected_payload: ::String) -> ::String
+        def remove: (packet: ::String, encrypted_offset: ::Integer) -> [::String, ::Integer]
+        private def mask: (::String) -> ::String
+      end
+    end
+  end
+end

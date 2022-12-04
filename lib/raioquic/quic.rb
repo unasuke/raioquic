@@ -3,6 +3,7 @@
 require_relative "quic/rangeset"
 require_relative "quic/packet"
 require_relative "quic/packet_builder"
+require_relative "quic/crypto"
 
 module Raioquic
   # Raioquic::Quic
