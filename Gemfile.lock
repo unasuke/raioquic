@@ -23,9 +23,15 @@ GEM
     ast (2.4.2)
     builder (3.2.4)
     concurrent-ruby (1.1.10)
+    debug (1.7.0)
+      irb (>= 1.5.0)
+      reline (>= 0.3.1)
     ffi (1.15.5)
     i18n (1.12.0)
       concurrent-ruby (~> 1.0)
+    io-console (0.5.11)
+    irb (1.5.1)
+      reline (>= 0.3.0)
     json (2.6.2)
     language_server-protocol (3.17.0.1)
     listen (3.7.1)
@@ -48,6 +54,8 @@ GEM
       ffi (~> 1.0)
     rbs (2.6.0)
     regexp_parser (2.5.0)
+    reline (0.3.1)
+      io-console (~> 0.5)
     rexml (3.2.5)
     rubocop (1.36.0)
       json (~> 2.3)
@@ -88,6 +96,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
+  debug
   minitest (~> 5.0)
   minitest-reporters
   openssl!

@@ -18,3 +18,5 @@ gem "rubocop-rake", require: false
 gem "steep"
 
 gem "openssl", git: "https://github.com/ruby/openssl.git", ref: "c1639f1b"
+
+gem "debug"
