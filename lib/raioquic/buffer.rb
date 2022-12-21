@@ -53,7 +53,7 @@ module Raioquic
     end
 
     def data
-      @buffer.string
+      data_slice(start: 0, ends: tell)
     end
 
     def seek(offset)
