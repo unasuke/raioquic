@@ -26,6 +26,22 @@ module Raioquic
       buf.data
     end
 
+    # Return the number of bytes required to encode the given value
+    # as a QUIC variable-length unsigned integer.
+    def self.size_uint_var(value)
+      if value <= 0x3f # rubocop:disable Style/GuardClause
+        return 1
+      elsif value <= 0x3fff
+        return 2
+      elsif value <= 0x3fffffff
+        return 4
+      elsif value <= 0x3fffffffffffffff
+        return 8
+      else
+        raise ValueError, "Integer is too big for a variable-length integer"
+      end
+    end
+
     def initialize(capacity: nil, data: "")
       @position = 0 # bytes count
       @buffer = StringIO.open(+data, "rb+:ASCII-8bit:ASCII-8BIT")
@@ -173,22 +189,6 @@ module Raioquic
         push_uint8((value >> 16) & 0xff)
         push_uint8((value >> 8) & 0xff)
         push_uint8(value & 0xff)
-      else
-        raise ValueError, "Integer is too big for a variable-length integer"
-      end
-    end
-
-    # Return the number of bytes required to encode the given value
-    # as a QUIC variable-length unsigned integer.
-    def size_uint_var(value)
-      if value <= 0x3f # rubocop:disable Style/GuardClause
-        return 1
-      elsif value <= 0x3fff
-        return 2
-      elsif value <= 0x3fffffff
-        return 4
-      elsif value <= 0x3fffffffffffffff
-        return 8
       else
         raise ValueError, "Integer is too big for a variable-length integer"
       end

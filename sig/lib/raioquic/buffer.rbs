@@ -8,6 +8,7 @@ module Raioquic
     end
 
     def self.encode_uint_var: (Integer) -> String
+    def self.size_uint_var: (Integer) -> (1 | 2 | 4 | 8)
     def initialize: (?capacity: Integer?, ?data: String) -> void
     def dealloc: () -> nil
     def data: () -> String
@@ -28,7 +29,6 @@ module Raioquic
     def push_uint64: (Integer) -> void
     def push_uint_var: (Integer) -> void
     def encode_uint_var: (Integer) -> nil
-    def size_uint_var: (Integer) -> (1 | 2 | 4 | 8)
     private def check_read_bounds: (Integer) -> void
   end
 end
