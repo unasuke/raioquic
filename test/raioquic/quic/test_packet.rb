@@ -171,7 +171,7 @@ class TestRaioquicQuicPacket < Minitest::Test
 
   def test_pull_short_header_no_fixed_bit
     buf = Raioquic::Buffer.new(data: "\x00")
-    assert_raises Raioquic::ValueError, "Packer fixed bit is zero" do
+    assert_raises Raioquic::ValueError, "Packet fixed bit is zero" do
       Packet.pull_quic_header(buf: buf, host_cid_length: 8)
     end
   end

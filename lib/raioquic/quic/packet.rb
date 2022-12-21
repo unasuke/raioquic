@@ -65,7 +65,7 @@ module Raioquic
         attr_accessor :rest_length
       end
 
-      # Recover a packer number from a truncated packet number.
+      # Recover a packet number from a truncated packet number.
       # See: Appendix A - Sample Packet Number Decoding Algorithm
       def self.decode_packet_number(truncated:, num_bits:, expected:)
         window = 1 << num_bits
