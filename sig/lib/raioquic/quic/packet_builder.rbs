@@ -1,0 +1,47 @@
+module Raioquic
+  module Quic
+    class PacketBuilder
+      PACKET_MAX_SIZE: 1280
+      PACKET_LENGTH_SEND_SIZE: 2
+      PACKET_NUMBER_SEND_SIZE: 2
+
+      class QuicDeliveryState
+        ACKED: 0
+        LOST: 1
+        EXPIRED: 2
+      end
+
+      class QuicSentPacket
+        attr_accessor epoch: ::Integer
+        attr_accessor in_flight: bool
+        attr_accessor is_ack_eliciting: bool
+        attr_accessor is_crypto_packet: bool
+        attr_accessor packet_number: ::Integer
+        attr_accessor packet_type: ::Integer
+        attr_accessor sent_time: ::Integer
+        attr_accessor sent_bytes: ::Integer
+        attr_accessor delivery_handlers: untyped
+        attr_accessor quic_logger_frames: untyped
+      end
+
+      class QuicPacketBuilderStop < StandardError
+      end
+
+      class QuicPacketBuilder
+        attr_reader packet_number: ::Integer
+        attr_accessor max_flight_bytes: ::Integer
+        attr_accessor max_total_bytes: ::Integer
+
+        def initialize: (host_cid: ::String, peer_cid: ::String, version: ::Integer, is_client: bool, packet_number: ::Integer, peer_token: ::String, ?quic_logger: untyped?, ?spin_bit: bool) -> void
+        def packet_is_empty: () -> bool
+        def remaining_buffer_space: () -> ::Integer
+        def remaining_flight_space: () -> ::Integer
+        def flush: () -> ::Array[::Array[::String]]
+        def start_frame: (frame_type: ::Integer, ?capacity: ::Integer, ?handler: untyped?, ?handler_args: untyped) -> ::Raioquic::Buffer
+        def start_packet: (packet_type: ::Integer, crypto: ::Raioquic::Quic::Crypto::CryptoPair) -> void
+        def end_packet: () -> void
+        def flush_current_datagram: () -> void
+      end
+    end
+  end
+end
