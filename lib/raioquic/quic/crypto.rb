@@ -129,6 +129,7 @@ module Raioquic
       class CryptoPair
         attr_reader :recv
         attr_reader :send
+        attr_reader :aead_tag_size
 
         def initialize(recv_setup_cb: NoCallback.new, recv_teardown_cb: NoCallback.new, send_setup_cb: NoCallback.new, send_teardown_cb: NoCallback.new) # rubocop:disable Layout/LineLength
           @aead_tag_size = 16
