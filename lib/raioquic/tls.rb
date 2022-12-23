@@ -3,6 +3,8 @@
 require "openssl"
 
 module Raioquic
+  # Raioquic::TLS
+  # Migrated from auiquic/src/aioquic/tls.py
   module TLS
     TLS_VERSION_2_2 = 0x0303
     TLS_VERSION_1_3 = 0x0304
@@ -68,10 +70,12 @@ module Raioquic
     end
 
     def pull_block(buf:, capacity:)
+      raise NotImplementedError
     end
     module_function :pull_block
 
     def push_block(buf:, capacity:)
+      raise NotImplementedError
     end
     module_function :push_block
 
