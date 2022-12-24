@@ -1,10 +1,3 @@
-GIT
-  remote: https://github.com/ruby/openssl.git
-  revision: c1639f1b244eda238907881b3b007408192ed69f
-  ref: c1639f1b
-  specs:
-    openssl (3.1.0.pre)
-
 PATH
   remote: .
   specs:
@@ -44,6 +37,7 @@ GEM
       builder
       minitest (>= 5.0)
       ruby-progressbar
+    openssl (3.1.0)
     parallel (1.22.1)
     parser (3.1.2.1)
       ast (~> 2.4.1)
@@ -99,7 +93,7 @@ DEPENDENCIES
   debug
   minitest (~> 5.0)
   minitest-reporters
-  openssl!
+  openssl (>= 3.1.0)
   raioquic!
   rake (~> 13.0)
   rubocop (~> 1.21)
