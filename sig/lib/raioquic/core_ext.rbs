@@ -1,3 +1,7 @@
 class ::String
   def bytes_to_int: () -> ::Integer
 end
+
+class ::Integer
+  def to_bytes: (::Integer) -> ::String
+end
