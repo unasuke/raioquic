@@ -1,0 +1,3 @@
+class ::String
+  def bytes_to_int: () -> ::Integer
+end
