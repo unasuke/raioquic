@@ -9,7 +9,7 @@ socket.bind(host, port)
 puts "server start"
 loop do
   begin
-    raw, addr = socket.recvmsg_nonblock(1000)
+    raw, addr = socket.recvmsg_nonblock()
   rescue IO::WaitReadable
     retry
   end
