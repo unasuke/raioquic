@@ -20,3 +20,5 @@ gem "steep"
 gem "openssl", ">= 3.1.0"
 
 gem "debug"
+
+gem "certifi", git: "https://github.com/unasuke/ruby-certifi.git", branch: "update-202212"
