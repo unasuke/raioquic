@@ -34,6 +34,10 @@ Style/AccessorGrouping:
 Style/AccessModifierDeclarations:
   EnforcedStyle: inline
 
+Style/Documentation:
+  Exclude:
+    - "test/**/test_*.rb"
+
 Style/KeywordParametersOrder:
   Enabled: false
 
