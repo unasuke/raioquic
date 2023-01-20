@@ -1,10 +1,10 @@
 module Raioquic
   module TLS
-    TLS_VERSION_1_2: 0x0303
-    TLS_VERSION_1_3: 0x0304
-    TLS_VERSION_1_3_DRAFT_28: 0x7f1c
-    TLS_VERSION_1_3_DRAFT_27: 0x7f1b
-    TLS_VERSION_1_3_DRAFT_26: 0x7f1a
+    TLS_VERSION_1_2: ::Integer # 0x0303
+    TLS_VERSION_1_3: ::Integer # 0x0304
+    TLS_VERSION_1_3_DRAFT_28: ::Integer # 0x7f1c
+    TLS_VERSION_1_3_DRAFT_27: ::Integer # 0x7f1b
+    TLS_VERSION_1_3_DRAFT_26: ::Integer # 0x7f1a
 
     class AlertDescription
       CLOSE_NOTIFY: 0
@@ -36,6 +36,41 @@ module Raioquic
       NO_APPLICATION_PROTOCOL: 120
     end
 
+    class Alert < StandardError
+    end
+
+    class AlertBadCertificate < Alert
+      def description: () -> ::Integer
+    end
+
+    class AlertCertificateExpired < Alert
+      def description: () -> ::Integer
+    end
+
+    class AlertDecryptError < Alert
+      def description: () -> ::Integer
+    end
+
+    class AlertHandshakeFailure < Alert
+      def description: () -> ::Integer
+    end
+
+    class AlertIllegalParameter < Alert
+      def description: () -> ::Integer
+    end
+
+    class AlertInternalError < Alert
+      def description: () -> ::Integer
+    end
+
+    class AlertProtocolVersion < Alert
+      def description: () -> ::Integer
+    end
+
+    class AlertUnexpectedMessage < Alert
+      def description: () -> ::Integer
+    end
+
     class Direction
       DECRYPT: 0
       ENCRYPT: 1
@@ -62,14 +97,20 @@ module Raioquic
       SERVER_POST_HANDSHAKE: 10
     end
 
-    # def self?.pull_block: (buf: untyped, capacity: untyped) -> nil
-    # def self?.push_block: (buf: untyped, capacity: untyped) -> nil
+    def self.load_pem_private_key: (::String) -> OpenSSL::PKey::PKey
+                                 | (::String, ::String) -> OpenSSL::PKey::PKey
+    def self.load_pem_x509_certificates: (::String) -> ::Array[OpenSSL::X509::Certificate]
+    def self.verify_certificate: (certificate: OpenSSL::X509::Certificate, ?chain: ::Array[untyped], ?server_name: ::String|nil, ?cadata: untyped, ?cafile: untyped, ?capath: untyped) -> void
 
     class CipherSuite
-      AES_128_GCM_SHA256: 0x1301
-      AES_256_GCM_SHA384: 0x1302
-      CHACHA20_POLY1305_SHA256: 0x1303
-      EMPTY_RENEGOTIATION_INFO_SCSV: 0x00ff
+      AES_128_GCM_SHA256: ::Integer # 0x1301
+      AES_256_GCM_SHA384: ::Integer # 0x1302
+      CHACHA20_POLY1305_SHA256: ::Integer # 0x1303
+      EMPTY_RENEGOTIATION_INFO_SCSV: ::Integer # 0x00ff
+    end
+
+    class CompressionMethod
+      NULL: 0
     end
 
     class ExtensionType
@@ -85,18 +126,18 @@ module Raioquic
       COOKIE: 44
       PSK_KEY_EXCHANGE_MODES: 45
       KEY_SHARE: 51
-      QUIC_TRANSPORT_PARAMETERS: 0x0039
-      QUIC_TRANSPORT_PARAMETERS_DRAFT: 0xffa5
+      QUIC_TRANSPORT_PARAMETERS: ::Integer # 0x0039
+      QUIC_TRANSPORT_PARAMETERS_DRAFT: ::Integer # 0xffa5
       ENCRYPTED_SERVER_NAME: 65486
     end
 
     class Group
-      SECP256R1: 0x0017
-      SECP384R1: 0x0018
-      SECP521R1: 0x0019
-      X25519: 0x001d
-      X448: 0x001e
-      GREASE: 0xaaaa
+      SECP256R1: ::Integer # 0x0017
+      SECP384R1: ::Integer # 0x0018
+      SECP521R1: ::Integer # 0x0019
+      X25519: ::Integer # 0x001d
+      X448: ::Integer # 0x001e
+      GREASE: ::Integer # 0xaaaa
     end
 
     class HandshakeType
@@ -120,25 +161,262 @@ module Raioquic
     end
 
     class SignatureAlgorithm
-      ECDSA_SECP256R1_SHA256: 0x0403
-      ECDSA_SECP384R1_SHA384: 0x0503
-      ECDSA_SECP521R1_SHA512: 0x0603
-      ED25519: 0x0807
-      ED448: 0x0808
-      RSA_PKCS1_SHA256: 0x0401
-      RSA_PKCS1_SHA384: 0x0501
-      RSA_PKCS1_SHA512: 0x0601
-      RSA_PSS_PSS_SHA256: 0x0809
-      RSA_PSS_PSS_SHA384: 0x080a
-      RSA_PSS_PSS_SHA512: 0x080b
-      RSA_PSS_RSAE_SHA256: 0x0804
-      RSA_PSS_RSAE_SHA384: 0x0805
-      RSA_PSS_RSAE_SHA512: 0x0806
+      ECDSA_SECP256R1_SHA256: ::Integer # 0x0403
+      ECDSA_SECP384R1_SHA384: ::Integer # 0x0503
+      ECDSA_SECP521R1_SHA512: ::Integer # 0x0603
+      ED25519: ::Integer # 0x0807
+      ED448: ::Integer # 0x0808
+      RSA_PKCS1_SHA256: ::Integer # 0x0401
+      RSA_PKCS1_SHA384: ::Integer # 0x0501
+      RSA_PKCS1_SHA512: ::Integer # 0x0601
+      RSA_PSS_PSS_SHA256: ::Integer # 0x0809
+      RSA_PSS_PSS_SHA384: ::Integer # 0x080a
+      RSA_PSS_PSS_SHA512: ::Integer # 0x080b
+      RSA_PSS_RSAE_SHA256: ::Integer # 0x0804
+      RSA_PSS_RSAE_SHA384: ::Integer # 0x0805
+      RSA_PSS_RSAE_SHA512: ::Integer # 0x0806
 
       # legacy
-      RSA_PKCS1_SHA1: 0x0201
-      SHA1_DSA: 0x0202
-      ECDSA_SHA1: 0x0203
+      RSA_PKCS1_SHA1: ::Integer # 0x0201
+      SHA1_DSA: ::Integer # 0x0202
+      ECDSA_SHA1: ::Integer # 0x0203
+    end
+    
+    def self.pull_block: (buf: ::Raioquic::Buffer, capacity: ::Integer) { (::Integer) -> untyped } -> untyped
+    def self.push_block: (buf: ::Raioquic::Buffer, capacity: ::Integer) { (untyped) -> untyped } -> untyped
+    def self.pull_list: (buf: ::Raioquic::Buffer, capacity: ::Integer, func: ::Proc) -> ::Array[untyped]
+    def self.push_list: (buf: ::Raioquic::Buffer, capacity: ::Integer, func: ::Proc, values: ::Array[untyped]) -> void
+    def self.pull_opaque: (buf: ::Raioquic::Buffer, capacity: ::Integer) -> ::String
+    def self.push_opaque: (buf: ::Raioquic::Buffer, capacity: ::Integer, value: untyped) -> void
+    def self.push_extension: (buf: ::Raioquic::Buffer, extension_type: ::Integer) { (untyped) -> untyped } -> void
+    type key_share_entry = [::Integer, ::String]
+    def self.pull_key_share: (buf: ::Raioquic::Buffer) -> key_share_entry
+    def self.push_key_share: (buf: ::Raioquic::Buffer, value: key_share_entry) -> void
+    def self.pull_alpn_protocol: (buf: ::Raioquic::Buffer) -> ::String
+    def self.push_alpn_protocol: (buf: ::Raioquic::Buffer, protocol: ::Integer) -> void
+    type psk_identity = [::String, ::Integer]
+    def self.pull_psk_identity: (buf: ::Raioquic::Buffer) -> psk_identity
+    def self.push_psk_identity: (buf: ::Raioquic::Buffer, entry: psk_identity) -> void
+    def self.pull_psk_binder: (buf: ::Raioquic::Buffer) -> ::String
+    def self.push_psk_binder: (buf: ::Raioquic::Buffer, binder: ::String) -> void
+
+    class OfferedPsks
+      attr_accessor identities: ::Array[psk_identity]
+      attr_accessor binders: ::Array[::String]
+    end
+
+    type tls_extension = [::Integer, ::String]
+    class ClientHello
+      attr_accessor random: ::String
+      attr_accessor legacy_session_id: ::String
+      attr_accessor cipher_suites: ::Array[::Integer]
+      attr_accessor legacy_compression_methods: ::Array[::Integer]
+      attr_accessor alpn_protocols: ::Array[::String] | nil
+      attr_accessor early_data: bool
+      attr_accessor key_share: ::Array[key_share_entry] | nil
+      attr_accessor pre_shared_key: OfferedPsks | nil
+      attr_accessor psk_key_exchange_modes: ::Array[::Integer] | nil
+      attr_accessor server_name: ::String | nil
+      attr_accessor signature_algorithms: ::Array[::Integer] | nil
+      attr_accessor supported_groups: ::Array[::Integer] | nil
+      attr_accessor supported_versions: ::Array[::Integer] | nil
+      attr_accessor other_extensions: ::Array[tls_extension]
+    end
+
+    def self.pull_client_hello: (::Raioquic::Buffer) -> ClientHello
+    def self.push_client_hello: (buf: ::Raioquic::Buffer, hello: ClientHello) -> void
+
+    class ServerHello
+      attr_accessor random: ::String
+      attr_accessor legacy_session_id: ::String
+      attr_accessor cipher_suite: ::Integer
+      attr_accessor compression_method: ::Integer
+      attr_accessor key_share: key_share_entry | nil
+      attr_accessor pre_shared_key: ::Integer | nil
+      attr_accessor supported_version: ::Integer | nil
+      attr_accessor other_extensions: ::Array[tls_extension]
+    end
+
+    def self.pull_server_hello: (::Raioquic::Buffer) -> ServerHello
+    def self.push_server_hello: (buf: ::Raioquic::Buffer, hello: ServerHello) -> void
+
+    class NewSessionTicket
+      attr_accessor ticket_lifetime: ::Integer
+      attr_accessor ticket_age_add: ::Integer
+      attr_accessor ticket_nonce: ::String
+      attr_accessor ticket: ::String
+      attr_accessor max_early_data_size: ::Integer | nil
+      attr_accessor other_extensions: ::Array[tls_extension]
+    end
+
+    def self.pull_new_session_ticket: (::Raioquic::Buffer) -> NewSessionTicket
+    def self.push_new_session_ticket: (buf: ::Raioquic::Buffer, new_session_ticket: NewSessionTicket) -> void
+
+    class EncryptedExtensions
+      attr_accessor alpn_protocol: ::String | nil
+      attr_accessor early_data: bool
+      attr_accessor other_extensions: ::Array[tls_extension]
+    end
+
+    def self.pull_encrypted_extensions: (::Raioquic::Buffer) -> EncryptedExtensions
+    def self.push_encrypted_extensions: (buf: ::Raioquic::Buffer, extensions: EncryptedExtensions) -> void
+
+    type certificate_entry = [::String, ::String]
+    class Certificate
+      attr_accessor request_context: ::String
+      attr_accessor certificates: ::Array[certificate_entry]
+    end
+
+    def self.pull_certificate: (::Raioquic::Buffer) -> Certificate
+    def self.push_certificate: (buf: ::Raioquic::Buffer, certificate: Certificate) -> void
+
+    class CertificateVerify
+      attr_accessor algorithm: ::Integer
+      attr_accessor signature: ::String
+    end
+
+    def self.pull_certificate_verify: (::Raioquic::Buffer) -> CertificateVerify
+    def self.push_certificate_verify: (buf: ::Raioquic::Buffer, verify: CertificateVerify) -> void
+
+    class Finished
+      attr_accessor verify_data: ::String
+    end
+
+    def self.pull_finished: (::Raioquic::Buffer) -> Finished
+    def self.push_finished: (buf: ::Raioquic::Buffer, finished: Finished) -> void
+
+    class KeySchedule
+      @algorithm: singleton(::OpenSSL::Digest)
+      @cipher_suite: CipherSuite
+      @generation: ::Integer
+      @hash: untyped # TODO: ::OpenSSL::Digest::SHA256 | ::OpenSSL::Digest::SHA384 | ::OpenSSL::Digest::SHA512
+      @hash_empty_value: untyped
+      @secret: ::String
+
+      def initialize: (::Integer) -> void
+      def certificate_verify_data: (::String) -> ::String
+      def finished_verify_data: (::String) -> ::String
+      def derive_secret: (::String) -> ::String
+      def extract: (::String) -> void
+                 | () -> void
+      def update_hash: (::String) -> void
+    end
+
+    class KeyScheduleProxy
+      @schedules: ::Hash[::Integer, KeySchedule]
+
+      def initialize: (::Array[::Integer]) -> void
+      def extract: (::String) -> void
+                 | () -> void
+      def select: (::Integer) -> KeySchedule
+      def update_hash: (::String) -> void
+    end
+
+    CIPHER_SUITES: ::Hash[::Integer, singleton(::OpenSSL::Digest)]
+    SIGNATURE_ALGORITHMS: ::Hash[::Integer, ::Array[untyped]] # TODO: [(::Symbol|nil), singleton(::OpenSSL::Digest)]
+    GROUP_TO_CURVE: ::Hash[::Integer, ::String]
+    CURVE_TO_GROUP: ::Hash[::String, ::Integer]
+
+    def self.cipher_suite_hash: (::Integer) -> singleton(OpenSSL::Digest)
+    def self.decode_public_key: ([::Integer, ::String]) -> (::OpenSSL::PKey::EC::Point | ::OpenSSL::PKey::PKey | nil)
+    def self.encode_public_key: (::OpenSSL::PKey::EC::Point) -> key_share_entry
+    def self.negotiate: [T] (supported: ::Array[T], offered: ::Array[T], ?exc: singleton(Alert)) -> (T | nil)
+    def self.push_message: (key_schedule: KeySchedule|KeyScheduleProxy, buf: ::Raioquic::Buffer) { (untyped) -> untyped } -> void
+
+    class SessionTicket
+      attr_accessor age_add: ::Integer
+      attr_accessor cipher_suite: CipherSuite
+      attr_accessor not_valid_after: ::Time
+      attr_accessor not_valid_before: ::Time
+      attr_accessor resumption_secret: ::String
+      attr_accessor server_name: ::String
+      attr_accessor ticket: ::String
+      attr_accessor max_early_data_size: (::Integer | nil)
+      attr_accessor other_extensions: ::Array[tls_extension]
+
+      def is_valid: () -> bool
+      def obfuscated_age: () -> ::Integer
+    end
+
+    class Context
+      type alpn_handler = ^(::Integer) -> void
+      type session_ticket_fetcher = ^(::String) -> (SessionTicket | nil)
+      type session_ticket_handler = ^(SessionTicket) -> void
+
+      @alpn_protocols: ::Array[::String]
+      @cadata: ::String | nil
+      @cafile: ::String | nil
+      @capath: ::String | nil
+      @certificate: ::OpenSSL::X509::Certificate | nil
+      @certificate_chain: ::Array[::OpenSSL::X509::Certificate]
+      @certificate_private_key: ::OpenSSL::PKey | nil
+      @handshake_extensions: ::Array[tls_extension]
+      @max_early_data: ::Integer | nil
+      @session_ticket: SessionTicket | nil
+      @server_name: ::String | nil
+      @verify_mode: ::Integer # OpenSSL::SSL::VERIFY_NONE or OpenSSL::SSL::VERIFY_PEER
+      @alpn_cb: alpn_handler | nil
+      @get_session_ticket_cb: session_ticket_fetcher | nil
+      @new_session_ticket_cb: session_ticket_handler | nil
+      @update_traffic_key_cb: ::Proc # TODO: How to define lambda that has four arguments?
+      @cipher_suites: ::Array[::Integer]
+      @legacy_compression_methods: [::Integer]
+      @psk_key_exchange_modes: [::Integer]
+      @signature_algorithms: ::Array[::Integer]
+      @supported_groups: ::Array[::Integer]
+      @supported_versions: ::Array[::Integer]
+
+      # state
+      @alpn_negotiated: ::String | nil
+      @early_data_accepted: bool
+      @key_schedule: KeySchedule | nil
+      @key_schedule_psk: ::Array[tls_extension] | nil
+      @received_extensions: ::Array[tls_extension] | nil
+      @key_schedule_proxy: KeyScheduleProxy | nil
+      @new_session_ticket: NewSessionTicket | nil
+      @peer_certificate: ::OpenSSL::X509::Certificate | nil
+      @peer_certificate_chain: ::Array[::OpenSSL::X509::Certificate]
+      @receive_buffer: ::String
+      @session_resumed: bool
+      @enc_key: ::String | nil
+      @dec_key: ::String | nil
+      @logger: untyped # TODO: ::Logger
+      @ec_key: ::OpenSSL::PKey::EC | nil
+      @ec_private_key: ::OpenSSL::BN
+      @x25519_private_key: untyped
+      @x448_private_key: untyped
+      @client_random: ::String | nil
+      @legacy_session_id: ::String | nil
+      @state: ::Integer
+
+      def initialize: (
+        is_client: bool,
+        ?alpn_protocols: ::Array[::String],
+        ?cadata: (::String | nil),
+        ?cafile: (::String | nil),
+        ?capath: (::String | nil),
+        ?cipher_suites: (::Array[::Integer] | nil),
+        ?logger: (untyped | nil), # TODO: ::Logger
+        ?max_early_data: (::Integer | nil),
+        ?server_name: (::String | nil),
+        ?verify_mode: (::Integer | nil),
+      ) -> void
+
+      def handle_message: (input_data: ::String, output_buf: ::Hash[::Integer, Buffer]) -> void
+      def build_session_ticket: (new_session_ticket: NewSessionTicket, other_extensions: ::Array[tls_extension]) -> SessionTicket
+      def client_send_hello: (Buffer) -> void
+      def client_handle_hello: (input_buf: Buffer, output_buf: Buffer) -> void
+      def client_handle_encrypted_extensions: (Buffer) -> void
+      def client_handle_certificate: (Buffer) -> void
+      def client_handle_certificate_verify: (Buffer) -> void
+      def client_handle_finished: (input_buf: Buffer, output_buf: Buffer) -> void
+      def client_handle_new_session_ticket: (Buffer) -> void
+      def server_handle_hello: (input_buf: Buffer, initial_buf: Buffer, handshake_buf: Buffer, onertt_buf: Buffer) -> void
+      def server_handle_finished: (input_buf: Buffer, output_buf: Buffer) -> void
+      def setup_traffic_protection: (::Integer, ::Integer, ::String) -> void
+      def set_state: (::Integer) -> void
+      private def sign_with_params: (priv_key: ::OpenSSL::PKey::PKey|OpenSSL::PKey::RSA, signature_algorithm: ::Integer, verify_data: ::String) -> ::String
+      private def verify_with_params: (cert: ::OpenSSL::X509::Certificate, signature_algorithm: ::Integer, signature: ::String, verify_data: ::String) -> ::String
     end
   end
 end
