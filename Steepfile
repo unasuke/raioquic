@@ -4,5 +4,5 @@ target :lib do
   signature "sig"
 
   check "lib"
-  library "ipaddr", "socket", "openssl"
+  library "ipaddr", "socket", "openssl", "logger"
 end
