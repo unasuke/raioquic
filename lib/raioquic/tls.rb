@@ -8,7 +8,7 @@ require_relative "core_ext"
 module Raioquic
   # Raioquic::TLS
   # Migrated from auiquic/src/aioquic/tls.py
-  module TLS
+  module TLS # rubocop:disable Metrics/ModuleLength
     TLS_VERSION_1_2 = 0x0303
     TLS_VERSION_1_3 = 0x0304
     TLS_VERSION_1_3_DRAFT_28 = 0x7f1c
@@ -45,51 +45,60 @@ module Raioquic
       NO_APPLICATION_PROTOCOL = 120
     end
 
+    # Abstrust class of tls alert protocol message
     class Alert < StandardError
     end
 
+    # Represent TLS alert bad_certificate
     class AlertBadCertificate < Alert
       def description
         AlertDescription::BAD_CERTIFICATE
       end
     end
 
+    # Represent TLS alert certificate_expired
     class AlertCertificateExpired < Alert
       def description
         AlertDescription::CERTIFICATE_EXPIRED
       end
     end
 
+    # Represent TLS alert decrypt_error
     class AlertDecryptError < Alert
       def description
         AlertDescription::DECRYPT_ERROR
       end
     end
 
+    # Represent TLS alert handshake_failure
     class AlertHandshakeFailure < Alert
       def description
         AlertDescription::HANDSHAKE_FAILURE
       end
     end
 
+    # Represent TLS alert illegal_parameter
     class AlertIllegalParameter < Alert
       def description
         AlertDescription::ILLEGAL_PARAMETER
       end
     end
 
+    # Represent TLS alert internal_error
     class AlertInternalError < Alert
       def description
         AlertDescription::INTERNAL_ERROR
       end
     end
 
+    # Represent TLS alert protocol_version
     class AlertProtocolVersion < Alert
       def description
         AlertDescription::PROTOCOL_VERSION
       end
     end
 
+    # Represent TLS alert unexpected_message
     class AlertUnexpectedMessage < Alert
       def description
         AlertDescription::UNEXPECTED_MESSAGE
@@ -133,7 +142,7 @@ module Raioquic
       boundary = "-----END CERTIFICATE-----\n"
       certificates = []
       data.split(boundary).each do |chunk|
-        certificates << OpenSSL::X509::Certificate.new(chunk+boundary)
+        certificates << OpenSSL::X509::Certificate.new(chunk + boundary)
       end
       return certificates
     end
@@ -142,15 +151,13 @@ module Raioquic
       OpenSSL::X509::Certificate.new(certificate)
     end
 
-    def self.verify_certificate(certificate:, chain: [], server_name: nil, cadata: nil, cafile: nil, capath: nil)
+    def self.verify_certificate(certificate:, chain: [], server_name: nil, cadata: nil, cafile: nil, capath: nil) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       now = Time.now
       raise AlertCertificateExpired, "Certificate is not valid yet" if now < certificate.not_before
       raise AlertCertificateExpired, "Certificate is no longer valid" if now > certificate.not_after
 
-      if server_name
-        unless OpenSSL::SSL.verify_certificate_identity(certificate, server_name)
-          raise AlertBadCertificate, "hostname '#{server_name}' doesn't match '#{certificate.subject.to_a.find { |a| a[0] == "CN" }[1]}'"
-        end
+      if server_name && !OpenSSL::SSL.verify_certificate_identity(certificate, server_name)
+        raise AlertBadCertificate, "hostname '#{server_name}' doesn't match '#{certificate.subject.to_a.find { |a| a[0] == "CN" }[1]}'"
       end
 
       store = OpenSSL::X509::Store.new
@@ -365,7 +372,7 @@ module Raioquic
       :other_extensions,
     )
 
-    def self.pull_client_hello(buf)
+    def self.pull_client_hello(buf) # rubocop:disable Metrics/MethodLength, Metrics/CyclomaticComplexity
       raise RuntimeError unless buf.pull_uint8 == HandshakeType::CLIENT_HELLO
 
       hello = ClientHello.new
@@ -380,7 +387,7 @@ module Raioquic
         hello.other_extensions = []
 
         after_psk = false
-        pull_extension = lambda do
+        pull_extension = lambda do # rubocop:disable Metrics/BlockLength
           raise RuntimeError if after_psk
 
           extension_type = buf.pull_uint16
@@ -399,6 +406,7 @@ module Raioquic
           when ExtensionType::SERVER_NAME
             pull_block(buf: buf, capacity: 2) do
               raise RuntimeError unless buf.pull_uint8 == 0
+
               hello.server_name = pull_opaque(buf: buf, capacity: 2)
             end
           when ExtensionType::ALPN
@@ -421,7 +429,8 @@ module Raioquic
       return hello
     end
 
-    def self.push_client_hello(buf:, hello:)
+    # rubocop:disable Metrics/BlockLength
+    def self.push_client_hello(buf:, hello:) # rubocop:disable Metrics/MethodLength, Metrics/CyclomaticComplexity
       buf.push_uint8(HandshakeType::CLIENT_HELLO)
       push_block(buf: buf, capacity: 3) do
         buf.push_uint16(TLS_VERSION_1_2)
@@ -490,6 +499,7 @@ module Raioquic
         end
       end
     end
+    # rubocop:enable Metrics/BlockLength
 
     ServerHello = _ = Struct.new( # rubocop:disable Naming/ConstantName
       :random,
@@ -536,7 +546,7 @@ module Raioquic
       return hello
     end
 
-    def self.push_server_hello(buf:, hello:)
+    def self.push_server_hello(buf:, hello:) # rubocop:disable Metrics/MethodLength
       hello.compression_method ||= CompressionMethod::NULL
       hello.other_extensions ||= []
 
@@ -776,6 +786,7 @@ module Raioquic
       push_opaque(buf: buf, capacity: 3, value: finished.verify_data)
     end
 
+    # TLS KeySchedule class
     class KeySchedule
       attr_reader :cipher_suite
       attr_accessor :generation
@@ -791,8 +802,7 @@ module Raioquic
       end
 
       def certificate_verify_data(context_string)
-        fin = @hash.dup.digest
-        ("\x20" * 64) + context_string + "\x00" + fin
+        ("\x20" * 64) + context_string + "\x00" + @hash.dup.digest # rubocop:disable Style/StringConcatenation
       end
 
       def finished_verify_data(secret)
@@ -805,9 +815,9 @@ module Raioquic
       end
 
       def extract(key_material = nil)
-        key_material = "\x00" * @hash.digest_length unless key_material
+        key_material ||= "\x00" * @hash.digest_length
 
-        if @generation > 0
+        if @generation > 0 # rubocop:disable Style/IfUnlessModifier
           @secret = TTTLS13::KeySchedule.hkdf_expand_label(@secret, "derived", @hash_empty_value, @hash.digest_length, @hash.name)
         end
         @generation += 1
@@ -819,9 +829,10 @@ module Raioquic
       end
     end
 
+    # KeyScheduleProxy binds several KeySchedule object that has different digest length
     class KeyScheduleProxy
       def initialize(cipher_suites)
-        @schedules = cipher_suites.inject({}) do |hash, cipher_suite|
+        @schedules = cipher_suites.each_with_object({}) do |cipher_suite, hash|
           hash[cipher_suite] = KeySchedule.new(cipher_suite)
           hash
         end
@@ -878,7 +889,7 @@ module Raioquic
       when Group::X448
         raise "X448 did not support yet."
       else
-        if GROUP_TO_CURVE.has_key?(key_share[0])
+        if GROUP_TO_CURVE.key?(key_share[0])
           group = OpenSSL::PKey::EC::Group.new(GROUP_TO_CURVE[key_share[0]])
           OpenSSL::PKey::EC::Point.new(group, key_share[1])
         end
@@ -894,7 +905,7 @@ module Raioquic
       end
     end
 
-    def self.negotiate(supported: , offered: nil, exc: nil)
+    def self.negotiate(supported:, offered: nil, exc: nil)
       if offered
         supported.each do |c|
           return c if offered.include?(c)
@@ -938,6 +949,7 @@ module Raioquic
       end
     end
 
+    # Represent TLS server-side or client-side peer
     class Context
       attr_reader :session_resumed
       attr_reader :enc_key
@@ -975,7 +987,7 @@ module Raioquic
         @alpn_cb = nil
         @get_session_ticket_cb = nil
         @new_session_ticket_cb = nil
-        @update_traffic_key_cb = lambda { |direction, epoch, cipher_suite, secret| nil }
+        @update_traffic_key_cb = ->(_direction, _epoch, _cipher_suite, _secret) {}
         @cipher_suites =
           cipher_suites || [
             CipherSuite::AES_256_GCM_SHA384,
@@ -1022,9 +1034,9 @@ module Raioquic
           @legacy_session_id = nil
           @state = State::SERVER_EXPECT_CLIENT_HELLO
         end
-        self
       end
 
+      # rubocop:disable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Style/GuardClause
       def handle_message(input_data:, output_buf:)
         if @state == State::CLIENT_HANDSHAKE_START
           client_send_hello(output_buf[Epoch::INITIAL])
@@ -1041,7 +1053,7 @@ module Raioquic
           break if @receive_buffer.bytesize < message_length
 
           message = @receive_buffer[0...message_length]
-          @receive_buffer = @receive_buffer[message_length..-1]
+          @receive_buffer = @receive_buffer[message_length..]
 
           input_buf = Buffer.new(data: message)
 
@@ -1108,11 +1120,12 @@ module Raioquic
           end
         end
       end
+      # rubocop:enable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Style/GuardClause
 
       def build_session_ticket(new_session_ticket:, other_extensions:)
         resumption_master_secret = @key_schedule&.derive_secret("res master")
         resumption_secret = TTTLS13::KeySchedule.hkdf_expand_label(
-          resumption_master_secret, "resumption", new_session_ticket.ticket_nonce, @key_schedule.hash.digest_length, @key_schedule.hash.name
+          resumption_master_secret, "resumption", new_session_ticket.ticket_nonce, @key_schedule.hash.digest_length, @key_schedule.hash.name,
         )
 
         timestamp = Time.now
@@ -1129,6 +1142,7 @@ module Raioquic
         end
       end
 
+      # rubocop:disable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       def client_send_hello(output_buf)
         key_share = []
         supported_groups = []
@@ -1141,9 +1155,7 @@ module Raioquic
             @ec_private_key = ec.private_key
             key_share << TLS.encode_public_key(ec.public_key)
             supported_groups << Group::SECP256R1
-          when Group::X25519
-            raise "unsupported"
-          when Group::X448
+          when Group::X25519, Group::X448
             raise "unsupported"
           when Group::GREASE
             key_share << [Group::GREASE, '\x00']
@@ -1160,7 +1172,7 @@ module Raioquic
           h.alpn_protocols = @alpn_protocols
           h.early_data = false
           h.key_share = key_share
-          h.psk_key_exchange_modes = (@session_ticket || !!@new_session_ticket_cb) ? @psk_key_exchange_modes : nil
+          h.psk_key_exchange_modes = (@session_ticket || @new_session_ticket_cb ? @psk_key_exchange_modes : nil)
           h.server_name = @server_name
           h.signature_algorithms = @signature_algorithms
           h.supported_groups = supported_groups
@@ -1169,7 +1181,7 @@ module Raioquic
         end
 
         # PSK
-        if @session_ticket && @session_ticket.is_valid
+        if @session_ticket&.is_valid
           @key_schedule_psk = KeySchedule.new(@session_ticket.cipher_suite)
           @key_schedule_psk.extract(@session_ticket.resumption_secret)
           binder_key = @key_schedule_psk.derive_secret("res binder")
@@ -1177,10 +1189,10 @@ module Raioquic
 
           # update hello
           hello.early_data = true if @session_ticket.max_early_data_size
-          hello.pre_shared_key = OfferedPsks.new.tap { |psks|
+          hello.pre_shared_key = OfferedPsks.new.tap do |psks|
             psks.identities = [[@session_ticket.ticket, @session_ticket.obfuscated_age]]
             psks.binders = ["\x00" * binder_length]
-          }
+          end
 
           # serialize hello withouit binder
           tmp_buf = Buffer.new(capacity: 1024)
@@ -1208,8 +1220,10 @@ module Raioquic
         end
         set_state(State::CLIENT_EXPECT_SERVER_HELLO)
       end
+      # rubocop:enable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
-      def client_handle_hello(input_buf:, output_buf:)
+      # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Style/GuardClause
+      def client_handle_hello(input_buf:, output_buf:) # rubocop:disable Lint/UnusedMethodArgument
         peer_hello = TLS.pull_server_hello(input_buf)
 
         cipher_suite = TLS.negotiate(supported: @cipher_suites, offered: [peer_hello.cipher_suite], exc: AlertHandshakeFailure)
@@ -1219,9 +1233,7 @@ module Raioquic
 
         # select key schedule
         if peer_hello.pre_shared_key
-          if @key_schedule_psk.nil? || peer_hello.pre_shared_key != 0 || cipher_suite != @key_schedule_psk.cipher_suite
-            raise AlertIllegalParameter
-          end
+          raise AlertIllegalParameter if @key_schedule_psk.nil? || peer_hello.pre_shared_key != 0 || cipher_suite != @key_schedule_psk.cipher_suite
 
           @key_schedule = @key_schedule_psk
           @session_resumed = true
@@ -1251,6 +1263,7 @@ module Raioquic
 
         set_state(State::CLIENT_EXPECT_ENCRYPTED_EXTENSIONS)
       end
+      # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Style/GuardClause
 
       def client_handle_encrypted_extensions(input_buf)
         encrypted_extensions = TLS.pull_encrypted_extensions(input_buf)
@@ -1258,7 +1271,7 @@ module Raioquic
         @alpn_negotiated = encrypted_extensions.alpn_protocol
         @early_data_accepted = encrypted_extensions.early_data
         @received_extensions = encrypted_extensions.other_extensions
-        @alpn_cb.call(@alpn_negotiated) if @alpn_cb
+        @alpn_cb&.call(@alpn_negotiated)
 
         setup_traffic_protection(Direction::ENCRYPT, Epoch::HANDSHAKE, "c hs traffic")
         @key_schedule.update_hash(input_buf.data)
@@ -1349,12 +1362,13 @@ module Raioquic
         new_session_ticket = TLS.pull_new_session_ticket(input_buf)
 
         # notify application
-        if @new_session_ticket_cb
+        if @new_session_ticket_cb # rubocop:disable Style/GuardClause
           ticket = build_session_ticket(new_session_ticket: new_session_ticket, other_extensions: @received_extensions)
           @new_session_ticket_cb.call(ticket)
         end
       end
 
+      # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
       def server_handle_hello(input_buf:, initial_buf:, handshake_buf:, onertt_buf:)
         peer_hello = TLS.pull_client_hello(input_buf)
 
@@ -1376,14 +1390,17 @@ module Raioquic
                                end
         # negotiate parameters
         cipher_suite = TLS.negotiate(supported: @cipher_suites, offered: peer_hello.cipher_suites, exc: AlertHandshakeFailure)
-        compression_method = TLS.negotiate(supported: @legacy_compression_methods, offered: peer_hello.legacy_compression_methods, exc: AlertHandshakeFailure)
+        compression_method =
+          TLS.negotiate(supported: @legacy_compression_methods, offered: peer_hello.legacy_compression_methods, exc: AlertHandshakeFailure)
         psk_key_exchange_mode = TLS.negotiate(supported: @psk_key_exchange_modes, offered: peer_hello.psk_key_exchange_modes)
         signature_algorithm = TLS.negotiate(supported: signature_algorithms, offered: peer_hello.signature_algorithms, exc: AlertHandshakeFailure)
         supported_version = TLS.negotiate(supported: @supported_versions, offered: peer_hello.supported_versions, exc: AlertProtocolVersion)
 
         # negotiate alpn
-        @alpn_negotiated = TLS.negotiate(supported: @alpn_protocols, offered: peer_hello.alpn_protocols, exc: AlertHandshakeFailure) unless @alpn_protocols.empty?
-        @alpn_cb.call(@alpn_negotiated) if @alpn_cb
+        unless @alpn_protocols.empty?
+          @alpn_negotiated = TLS.negotiate(supported: @alpn_protocols, offered: peer_hello.alpn_protocols, exc: AlertHandshakeFailure)
+        end
+        @alpn_cb&.call(@alpn_negotiated)
 
         @client_random = peer_hello.random
         @server_random = Random.urandom(32)
@@ -1402,7 +1419,7 @@ module Raioquic
           session_ticket = @get_session_ticket_cb.call(identity[0])
 
           # validate session ticket
-          if session_ticket && session_ticket.is_valid && session_ticket.cipher_suite == cipher_suite
+          if session_ticket&.is_valid && session_ticket&.cipher_suite == cipher_suite
             @key_schedule = KeySchedule.new(cipher_suite)
             @key_schedule.extract(session_ticket.resumption_secret)
 
@@ -1486,7 +1503,7 @@ module Raioquic
           TLS.push_message(key_schedule: @key_schedule, buf: handshake_buf) do
             cert = Certificate.new.tap do |c|
               c.request_context = ""
-              c.certificates = ([@certificate]+@certificate_chain).map { |x| [x.to_der, ""] }
+              c.certificates = ([@certificate] + @certificate_chain).map { |x| [x.to_der, ""] }
             end
             TLS.push_certificate(buf: handshake_buf, certificate: cert)
           end
@@ -1530,13 +1547,13 @@ module Raioquic
 
         # create a new session ticket
         if @new_session_ticket_cb && psk_key_exchange_mode
-          @new_session_ticket = NewSessionTicket.new.tap do |session_ticket|
-            session_ticket.ticket_lifetime = 86400
-            session_ticket.ticket_age_add = Random.urandom(4).unpack1("I")
-            session_ticket.ticket_nonce = ""
-            session_ticket.ticket = Random.urandom(64)
-            session_ticket.max_early_data_size = @max_early_data
-            session_ticket.other_extensions = []
+          @new_session_ticket = NewSessionTicket.new.tap do |st|
+            st.ticket_lifetime = 86400
+            st.ticket_age_add = Random.urandom(4).unpack1("I")
+            st.ticket_nonce = ""
+            st.ticket = Random.urandom(64)
+            st.max_early_data_size = @max_early_data
+            st.other_extensions = []
           end
 
           # send message
@@ -1549,8 +1566,9 @@ module Raioquic
 
         set_state(State::SERVER_EXPECT_FINISHED)
       end
+      # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
 
-      def server_handle_finished(input_buf:, output_buf:)
+      def server_handle_finished(input_buf:, output_buf:) # rubocop:disable Lint/UnusedMethodArgument
         finished = TLS.pull_finished(input_buf)
 
         # ckeck verify data

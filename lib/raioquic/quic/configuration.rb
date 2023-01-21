@@ -31,7 +31,7 @@ module Raioquic
       attr_accessor :supported_versions
       attr_accessor :verify_mode
 
-      def initialize(**kwargs)
+      def initialize(**kwargs) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
         @alpn_protocols = kwargs[:alpn_protocols]
         @connection_id_length = kwargs[:connection_id_length] || 8
         @idle_timeout = kwargs[:idle_timeout] || 60.0
@@ -62,17 +62,12 @@ module Raioquic
         cert_body = File.read(certfile)
         certs = OpenSSL::X509::Certificate.load(cert_body)
 
-        if certs.length > 1
-          @certificate = certs[0]
-          @certificate_chain = certs[1..]
-        else
-          @certificate = certs[0]
-        end
+        @certificate = certs[0]
+        @certificate_chain = certs[1..] if certs.length > 1
+
         @private_key = OpenSSL::PKey.read(cert_body) if cert_body.include?(boundary)
 
-        if keyfile
-          @private_key = OpenSSL::PKey.read(File.read(keyfile), password)
-        end
+        @private_key = OpenSSL::PKey.read(File.read(keyfile), password) if keyfile
       end
 
       def load_verify_locations

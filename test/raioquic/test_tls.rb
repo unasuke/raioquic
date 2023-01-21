@@ -2,12 +2,13 @@
 
 require "test_helper"
 
+# rubocop:disable Metrics/MethodLength, Metrics/BlockLength
 class TestRaioquicTLS < Minitest::Test
   TLS = ::Raioquic::TLS # for shorthand
 
   CERTIFICATE_DATA = File.binread("test/samples/tls_certificate.bin").then do |cert|
     len = cert.length
-    cert[11...(len-2)]
+    cert[11...(len - 2)]
   end
   CERTIFICATE_VARIFY_SIGNATURE = File.binread("test/samples/tls_certificate_verify.bin")[8..]
 
@@ -49,7 +50,7 @@ class TestRaioquicTLS < Minitest::Test
   end
 
   def reset_buffers(buffers)
-    buffers.values.each do |buffer|
+    buffers.each_value do |buffer|
       buffer.seek(0)
     end
   end
@@ -1201,7 +1202,8 @@ class TestRaioquicTLS < Minitest::Test
       err = assert_raises TLS::AlertBadCertificate do
         TLS.verify_certificate(cadata: cadata, certificate: certificate, server_name: "acme.com")
       end
-      assert_equal "hostname 'acme.com' doesn't match 'example.com'", err.message  # cannnot contain subjAltName in exception message yet...
+      assert_equal "hostname 'acme.com' doesn't match 'example.com'", err.message # cannnot contain subjAltName in exception message yet...
     end
   end
 end
+# rubocop:enable Metrics/MethodLength, Metrics/BlockLength
