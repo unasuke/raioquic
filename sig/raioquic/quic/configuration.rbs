@@ -1,0 +1,34 @@
+module Raioquic
+  module Quic
+    module QuicConfiguration
+      attr_accessor alpn_protocols: ::Array[untyped]
+      attr_accessor connection_id_length: ::Integer
+      attr_accessor idle_timeout: ::Float
+      attr_accessor is_client: bool
+      attr_accessor max_data: ::Integer
+      attr_accessor max_stream_data: ::Integer
+      attr_accessor quic_logger: ::Logger | nil
+      attr_accessor secrets_log_file: untyped
+      attr_accessor server_name: ::String | nil
+      attr_accessor session_ticket: ::String | nil
+      attr_accessor cadata: ::String | nil
+      attr_accessor cafile: ::String | nil
+      attr_accessor capath: ::String | nil
+      attr_accessor certificate: untyped
+      attr_accessor certificate_chain: ::Array[untyped]
+      attr_accessor cipher_suites: ::Array[::Integer]
+      attr_accessor initial_rtt: ::Float
+      attr_accessor max_datagram_frame_size: ::Integer
+      attr_accessor private_key: untyped
+      attr_accessor quantam_readiness_test: bool
+      attr_accessor supported_versions: ::Array[::Integer]
+      attr_accessor verify_mode: ::Integer # OpenSSL::SSL::VERIFY_NONE or OpenSSL::SSL::VERIFY_PEER
+
+      def initialize: (untyped) -> void
+      def load_cert_chain: (::String certfile) -> void
+                         | (::String certfile, ::String keyfile) -> void
+                         | (::String certfile, ::String keyfile, ::String password) -> void
+      def load_verify_locations: () -> void
+    end
+  end
+end
