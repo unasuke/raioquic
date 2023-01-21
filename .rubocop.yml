@@ -8,6 +8,7 @@ AllCops:
   Exclude:
     - "example/*.rb"
     - "tmp/*"
+    - "vendor/bundle/**/*"
 
 Metrics/AbcSize:
   Enabled: false
