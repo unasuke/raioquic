@@ -159,6 +159,8 @@ module Raioquic
 
     def push_uint32(value)
       @buffer << [value].pack("N").force_encoding(Encoding::ASCII_8BIT)
+    rescue
+      pp [value].pack("N")
     end
 
     def push_uint64(value)
