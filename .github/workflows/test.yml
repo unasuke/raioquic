@@ -23,5 +23,4 @@ jobs:
       with:
         ruby-version: ${{ matrix.ruby }}
         bundler-cache: true
-    - run: printenv
     - run: bundle exec rake test
