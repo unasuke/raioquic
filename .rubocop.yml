@@ -5,6 +5,9 @@ require:
 AllCops:
   TargetRubyVersion: 3.0
   NewCops: enable
+  Exclude:
+    - "example/*.rb"
+    - "tmp/*"
 
 Metrics/AbcSize:
   Enabled: false
