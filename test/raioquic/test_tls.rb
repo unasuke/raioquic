@@ -1079,7 +1079,7 @@ class TestRaioquicTLS < Minitest::Test
 
     buf = ::Raioquic::Buffer.new(capacity: 1600)
     TLS.push_certificate(buf: buf, certificate: certificate)
-    assert_equal File.read("test/samples/tls_certificate.bin"), buf.data
+    assert_equal File.binread("test/samples/tls_certificate.bin"), buf.data
   end
 
   def test_pull_certificate_verify
@@ -1099,7 +1099,7 @@ class TestRaioquicTLS < Minitest::Test
 
     buf = ::Raioquic::Buffer.new(capacity: 400)
     TLS.push_certificate_verify(buf: buf, verify: verify)
-    assert_equal File.read("test/samples/tls_certificate_verify.bin"), buf.data
+    assert_equal File.binread("test/samples/tls_certificate_verify.bin"), buf.data
   end
 
   def test_pull_finished
@@ -1117,7 +1117,7 @@ class TestRaioquicTLS < Minitest::Test
 
     buf = ::Raioquic::Buffer.new(capacity: 128)
     TLS.push_finished(buf: buf, finished: finished)
-    assert_equal File.read("test/samples/tls_finished.bin"), buf.data
+    assert_equal File.binread("test/samples/tls_finished.bin"), buf.data
   end
 
   def test_verify_certificate_chain
