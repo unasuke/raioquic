@@ -44,7 +44,7 @@ module Raioquic
 
     def initialize(capacity: nil, data: "")
       @position = 0 # bytes count
-      @buffer = StringIO.open(+data, "rb+:ASCII-8bit:ASCII-8BIT")
+      @buffer = StringIO.open((+data).force_encoding(Encoding::ASCII_8BIT), "rb+:ASCII-8bit:ASCII-8BIT")
       @capacity = capacity || @buffer.size
     end
 
@@ -150,21 +150,19 @@ module Raioquic
     end
 
     def push_uint8(value)
-      @buffer << [value].pack("C").force_encoding(Encoding::ASCII_8BIT)
+      @buffer << [value].pack("C")
     end
 
     def push_uint16(value)
-      @buffer << [value].pack("n").force_encoding(Encoding::ASCII_8BIT)
+      @buffer << [value].pack("n")
     end
 
     def push_uint32(value)
-      @buffer << [value].pack("N").force_encoding(Encoding::ASCII_8BIT)
-    rescue
-      pp [value].pack("N")
+      @buffer << [value].pack("N")
     end
 
     def push_uint64(value)
-      @buffer << [value].pack("Q>").force_encoding(Encoding::ASCII_8BIT)
+      @buffer << [value].pack("Q>")
     end
 
     def push_uint_var(value)
