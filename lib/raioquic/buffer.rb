@@ -150,19 +150,19 @@ module Raioquic
     end
 
     def push_uint8(value)
-      @buffer << [value].pack("C")
+      @buffer << [value].pack("C").force_encoding(Encoding::ASCII_8BIT)
     end
 
     def push_uint16(value)
-      @buffer << [value].pack("n")
+      @buffer << [value].pack("n").force_encoding(Encoding::ASCII_8BIT)
     end
 
     def push_uint32(value)
-      @buffer << [value].pack("N")
+      @buffer << [value].pack("N").force_encoding(Encoding::ASCII_8BIT)
     end
 
     def push_uint64(value)
-      @buffer << [value].pack("Q>")
+      @buffer << [value].pack("Q>").force_encoding(Encoding::ASCII_8BIT)
     end
 
     def push_uint_var(value)
