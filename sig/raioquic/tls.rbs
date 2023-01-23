@@ -380,7 +380,7 @@ module Raioquic
       @session_resumed: bool
       @enc_key: ::String | nil
       @dec_key: ::String | nil
-      @logger: ::Logger | nil
+      @logger: untyped | nil # TODO: logger
       @ec_key: ::OpenSSL::PKey::EC | nil
       @ec_private_key: ::OpenSSL::BN
       @x25519_private_key: untyped
@@ -396,7 +396,7 @@ module Raioquic
         ?cafile: (::String | nil),
         ?capath: (::String | nil),
         ?cipher_suites: (::Array[::Integer] | nil),
-        ?logger: (::Logger | nil),
+        ?logger: (untyped | nil), # TODO: logger
         ?max_early_data: (::Integer | nil),
         ?server_name: (::String | nil),
         ?verify_mode: (::Integer | nil),
