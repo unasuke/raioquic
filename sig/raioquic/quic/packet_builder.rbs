@@ -20,7 +20,7 @@ module Raioquic
         attr_accessor packet_type: ::Integer
         attr_accessor sent_time: ::Integer
         attr_accessor sent_bytes: ::Integer
-        attr_accessor delivery_handlers: untyped
+        attr_accessor delivery_handlers: ::Array[[^() -> void, untyped]]
         attr_accessor quic_logger_frames: untyped
       end
 
