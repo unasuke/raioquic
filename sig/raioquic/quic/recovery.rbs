@@ -1,0 +1,133 @@
+module Raioquic
+  module Quic
+    module Recovery
+      K_PACKET_THRESHOLD: ::Integer
+      K_GRANULARITY: ::Float
+      K_TIME_THRESHOLD: ::Float
+      K_MICRO_SECOND: ::Float
+      K_SECOND: ::Float
+      K_MAX_DATAGRAM_SIZE: ::Integer
+      K_INITIAL_WINDOW: ::Integer
+      K_MINIMUM_WINDOW: ::Integer
+      K_LOSS_REDUCTION_FACTOR: ::Float
+
+      class QuicPacketSpace
+        type sent_packets = ::Hash[::Integer, ::Raioquic::Quic::PacketBuilder::QuicSentPacket]
+
+        attr_accessor sent_packets: sent_packets
+        attr_accessor ack_at: ::Float | nil
+        attr_accessor ack_eliciting_in_flight: ::Integer
+        attr_accessor loss_time: ::Float | nil
+        attr_accessor largest_acked_packet: ::Integer
+
+        @ack_at: ::Float | nil
+        @ack_queue: Rangeset
+        @discarded: bool
+        @expected_packet_number: ::Integer
+        @largest_received_packet: ::Integer
+        @largest_received_time: ::Float | nil
+        @ack_eliciting_in_flight: ::Integer
+        @largest_acked_packet: ::Integer
+        @loss_time: ::Float | nil
+        @sent_packets: sent_packets
+
+        def initialize: () -> void
+      end
+
+      class QuicPacketPacer
+        attr_reader bucket_max: ::Float
+        attr_reader bucket_time: ::Float
+        attr_reader packet_time: ::Float | nil
+        @bucket_max: ::Float
+        @bucket_time: ::Float
+        @evaluation_time: ::Float
+        @packet_time: ::Float | nil
+
+        def initialize: () -> void
+        def next_send_time: (now: ::Float) -> (::Float | nil)
+        def update_after_send: (now: ::Float) -> void
+        def update_bucket: (now: ::Float) -> void
+        def update_rate: (congestion_window: ::Integer, smoothed_rtt: ::Float) -> void
+      end
+
+      class QuicCongestionControl
+        attr_reader bytes_in_flight: ::Integer
+        attr_reader congestion_window: ::Numeric
+        attr_reader ssthresh: ::Integer | nil
+
+        @bytes_in_flight: ::Integer
+        @congestion_window: ::Numeric
+        @congestion_recovery_start_time: ::Float
+        @congestion_stash: ::Numeric
+        @rtt_monitor: QuicRttMonitor
+        @ssthresh: ::Integer | nil
+
+        def initialize: () -> void
+        def on_packet_acked: (packet: ::Raioquic::Quic::PacketBuilder::QuicSentPacket) -> void
+        def on_packet_sent: (packet: ::Raioquic::Quic::PacketBuilder::QuicSentPacket) -> void
+        def on_packets_expired: (packets: ::Array[::Raioquic::Quic::PacketBuilder::QuicSentPacket]) -> void
+        def on_packets_lost: (packets: ::Array[::Raioquic::Quic::PacketBuilder::QuicSentPacket], now: ::Float) -> void
+        def on_rtt_measurement: (latest_rtt: ::Float, now: ::Float) -> void
+      end
+
+      class QuicPacketRecovery
+        attr_reader rtt_initialized: bool
+        attr_reader rtt_latest: ::Float
+        attr_reader rtt_min: ::Float
+        attr_reader rtt_smoothed: ::Float
+
+        attr_accessor spaces: ::Array[QuicPacketSpace]
+
+        @max_ack_delay: ::Float
+        @peer_completed_address_validation: bool
+        @spaces: ::Array[QuicPacketSpace]
+        @logger: untyped
+        @quic_logger: untyped
+        @send_probe: (^() -> untyped) | nil
+        @pto_count: ::Integer
+        @rtt_initial: ::Float
+        @rtt_initialized: bool
+        @rtt_latest: ::Float
+        @rtt_min: ::Float
+        @rtt_smoothed: ::Float
+        @rtt_variance: ::Float
+        @time_of_last_sent_ack_eliciting_packet: ::Float
+        @cc: QuicCongestionControl
+        @pacer: QuicPacketPacer
+
+        def initialize: (initial_rtt: ::Float, peer_completed_address_validation: bool, ?send_probe: (^() -> untyped) | nil, ?logger: untyped, ?quic_logger: untyped) -> void
+        def descard_space: (space: QuicPacketSpace) -> void
+        def get_loss_detection_time: () -> ::Float
+        def get_probe_timeout: () -> ::Float
+        def on_ack_received: (space: QuicPacketSpace, ack_rangeset: Rangeset, ack_delay: ::Float, now: ::Float) -> void
+        def on_loss_detection_timeout: (now: ::Float) -> void
+        def on_packet_sent: (packet: ::Raioquic::Quic::PacketBuilder::QuicSentPacket, space: QuicPacketSpace) -> void
+        def reschedule_data: (now: ::Float) -> void
+        def detect_loss: (space: QuicPacketSpace, now: ::Float) -> void
+        def get_loss_space: () -> (QuicPacketSpace | nil)
+        def log_metrics_updated: (?bool log_rtt) -> void
+        def on_packets_lost: (packets: ::Array[::Raioquic::Quic::PacketBuilder::QuicSentPacket], space: QuicPacketSpace, now: ::Float) -> void
+      end
+
+      class QuicRttMonitor
+        attr_reader samples: ::Array[::Float]
+        attr_reader ready: bool
+        attr_reader increases: ::Integer
+
+        @increases: ::Integer
+        @last_time: ::Integer | nil
+        @ready: bool
+        @size: ::Integer
+        @filtered_min: ::Float | nil
+        @sample_idx: ::Integer
+        @sample_max: ::Float | nil
+        @sample_min: ::Float | nil
+        @sample_time: ::Float
+        @samples: ::Array[::Float]
+
+        def add_rtt: (rtt: ::Float) -> void
+        def is_rtt_increasing: (rtt: ::Float, now: ::Float) -> bool
+      end
+    end
+  end
+end
