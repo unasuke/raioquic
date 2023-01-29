@@ -1,0 +1,51 @@
+module Raioquic
+  module Quic
+    module Event
+      class QuicEvent
+      end
+
+      class ConnectionIdIssued < QuicEvent
+        attr_accessor connection_id: ::String
+      end
+
+      class ConnectionIdRetired < QuicEvent
+        attr_accessor connection_id: ::String
+      end
+
+      class ConnectionTerminated < QuicEvent
+        attr_accessor error_code: ::Integer
+        attr_accessor frame_type: ::Integer | nil
+        attr_accessor reson_phase: ::String
+      end
+
+      class DatagramFrameReceived < QuicEvent
+        attr_accessor data: ::String
+      end
+
+      class HandshakeCompleted < QuicEvent
+        attr_accessor alpn_protocol: ::String | nil
+        attr_accessor early_data_accepted: bool
+        attr_accessor session_resumed: bool
+      end
+
+      class PingAcknowledged < QuicEvent
+        attr_accessor uid: ::Integer
+      end
+
+      class ProtocolNegotiated < QuicEvent
+        attr_accessor alpn_protocol: ::String | nil
+      end
+
+      class StreamDataReceived < QuicEvent
+        attr_accessor data: ::String
+        attr_accessor end_stream: bool
+        attr_accessor stream_id: ::Integer
+      end
+
+      class StreamReset < QuicEvent
+        attr_accessor error_code: ::Integer
+        attr_accessor stream_id: ::Integer
+      end
+    end
+  end
+end
