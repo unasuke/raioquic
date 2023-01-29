@@ -1,6 +1,47 @@
 module Raioquic
   module Quic
     class Packet
+      PACKET_LONG_HEADER: ::Integer
+      PACKET_FIXED_BIT: ::Integer
+      PACKET_SPIN_BIT: ::Integer
+      PACKET_TYPE_INITIAL: ::Integer
+      PACKET_TYPE_ZERO_RTT: ::Integer
+      PACKET_TYPE_HANDSHAKE: ::Integer
+      PACKET_TYPE_RETRY: ::Integer
+      PACKET_TYPE_ONE_RTT: ::Integer
+      PACKET_TYPE_MASK: ::Integer
+      CONNECTION_ID_MAX_SIZE: ::Integer
+      PACKET_NUMBER_MAX_SIZE: ::Integer
+      RETRY_AEAD_KEY_VERSION_1: ::String
+      RETRY_AEAD_NONCE_VERSION_1: ::String
+      RETRY_INTEGRITY_TAG_SIZE: ::Integer
+      STATELESS_RESET_TOKEN_SIZE: ::Integer
+
+      class QuicErrorCode
+        NO_ERROR: ::Integer
+        INTERNAL_ERROR: ::Integer
+        CONNECTION_REFUSED: ::Integer
+        FLOW_CONTROL_ERROR: ::Integer
+        STREAM_LIMIT_ERROR: ::Integer
+        STREAM_STATE_ERROR: ::Integer
+        FINAL_SIZE_ERROR: ::Integer
+        FRAME_ENCODING_ERROR: ::Integer
+        TRANSPORT_PARAMETER_ERROR: ::Integer
+        CONNECTION_ID_LIMIT_ERROR: ::Integer
+        PROTOCOL_VIOLATION: ::Integer
+        INVALID_TOKEN: ::Integer
+        APPLICATION_ERROR: ::Integer
+        CRYPTO_BUFFER_EXCEEDED: ::Integer
+        KEY_UPDATE_ERROR: ::Integer
+        AEAD_LIMIT_REACHED: ::Integer
+        CRYPTO_ERROR: ::Integer
+      end
+
+      class QuicProtocolVersion
+        NEGOTIATION: ::Integer
+        VERSION_1: ::Integer
+      end
+
       class QuicHeader
         attr_accessor is_long_header: bool
         attr_accessor version: Integer?
@@ -11,6 +52,17 @@ module Raioquic
         attr_accessor integrity_tag: String
         attr_accessor rest_length: Integer
       end
+
+      def self.decode_packet_number: (truncated: Integer, num_bits: Integer, expected: Integer) -> Integer
+      def self.get_retry_integrity_tag: (packet_without_tag: String, original_destination_cid: String) -> String
+      def self.get_spin_bit: (::Integer) -> bool
+      def self.is_draft_version: (::Integer) -> FalseClass
+      def self.is_long_header: (::Integer) -> bool
+      def self.pull_quic_header: (buf: ::Raioquic::Buffer, host_cid_length: ::Integer) -> QuicHeader
+      def self.encode_quic_retry: (version: untyped, source_cid: ::String, destination_cid: ::String, original_destination_cid: ::String, retry_token: ::String:writing) -> ::String
+      def self.encode_quic_version_negotiation: (source_cid: ::String, destination_cid: ::String, supported_versions: ::Array[untyped]) -> ::String
+
+      private def self.get_urandom_byte: -> ::Integer
 
       class QuicPreferredAddress
         attr_accessor ipv4_address: ::Hash[::Symbol, untyped]?
@@ -43,29 +95,63 @@ module Raioquic
 
       PARAMS: ::Hash[::Integer, ::Hash[::Symbol, ::Symbol]]
 
-      def self.decode_packet_number: (truncated: Integer, num_bits: Integer, expected: Integer) -> Integer
-      def self.get_retry_integrity_tag: (packet_without_tag: String, original_destination_cid: String) -> String
-      def self.get_spin_bit: (::Integer) -> bool
-      def self.is_draft_version: (::Integer) -> FalseClass
-      def self.is_long_header: (::Integer) -> bool
-      def self.pull_quic_header: (buf: ::Raioquic::Buffer, host_cid_length: ::Integer) -> QuicHeader
-      def self.encode_quic_retry: (version: untyped, source_cid: ::String, destination_cid: ::String, original_destination_cid: ::String, retry_token: ::String:writing) -> ::String
-      def self.encode_quic_version_negotiation: (source_cid: ::String, destination_cid: ::String, supported_versions: ::Array[untyped]) -> ::String
-      def self.pull_quic_preferred_address: (::Raioquic::Buffer) -> untyped
+      def self.pull_quic_preferred_address: (::Raioquic::Buffer buf) -> untyped
       def self.push_quic_preferred_address: (buf: ::Raioquic::Buffer, preferred_address: QuicPreferredAddress) -> void
-      def self.pull_quic_transport_parameters: (::Raioquic::Buffer) -> QuicTransportParameters
+      def self.pull_quic_transport_parameters: (::Raioquic::Buffer buf) -> QuicTransportParameters
       def self.push_quic_transport_parameters: (buf: ::Raioquic::Buffer, params: QuicTransportParameters) -> void
 
-      private def self.get_urandom_byte: -> ::Integer
-
-      def self.pull_ack_frame: (::Raioquic::Buffer) -> untyped
-      def self.push_ack_frame: (buf: ::Raioquic::Buffer, rangeset: Rangeset, delay: ::Integer) -> ::Integer
-
       class QuicFrameType
+        PADDING: ::Integer
+        PING: ::Integer
+        ACK: ::Integer
+        ACK_ECN: ::Integer
+        RESET_STREAM: ::Integer
+        STOP_SENDING: ::Integer
+        CRYPTO: ::Integer
+        NEW_TOKEN: ::Integer
+        STREAM_BASE: ::Integer
+        MAX_DATA: ::Integer
+        MAX_STREAM_DATA: ::Integer
+        MAX_STREAMS_BIDI: ::Integer
+        MAX_STREAMS_UNI: ::Integer
+        DATA_BLOCKED: ::Integer
+        STREAM_DATA_BLOCKED: ::Integer
+        STREAMS_BLOCKED_BIDI: ::Integer
+        STREAMS_BLOCKED_UNI: ::Integer
+        NEW_CONNECTION_ID: ::Integer
+        RETIRE_CONNECTION_ID: ::Integer
+        PATH_CHALLENGE: ::Integer
+        PATH_RESPONSE: ::Integer
+        TRANSPORT_CLOSE: ::Integer
+        APPLICATION_CLOSE: ::Integer
+        HANDSHAKE_DONE: ::Integer
+        DATAGRAM: ::Integer
+        DATAGRAM_WITH_LENGTH: ::Integer
       end
 
       NON_ACK_ELICITING_FRAME_TYPES: ::Array[::Integer]
+      NON_IN_FLIGHT_FRAME_TYPES: ::Array[::Integer]
+      PROBING_FRAME_TYPES: ::Array[::Integer]
 
+      class QuicResetStreamFrame
+        attr_accessor error_code: ::Integer
+        attr_accessor final_size: ::Integer
+        attr_accessor stream_id: ::Integer
+      end
+
+      class QuicStopSendingFrame
+        attr_accessor error_code: ::Integer
+        attr_accessor stream_id: ::Integer
+      end
+
+      class QuicStreamFrame
+        attr_accessor data: ::String
+        attr_accessor fin: bool
+        attr_accessor offset: ::Integer
+      end
+
+      def self.pull_ack_frame: (::Raioquic::Buffer) -> untyped
+      def self.push_ack_frame: (buf: ::Raioquic::Buffer, rangeset: Rangeset, delay: ::Integer) -> ::Integer
     end
   end
 end
