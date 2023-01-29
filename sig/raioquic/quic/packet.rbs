@@ -1,0 +1,71 @@
+module Raioquic
+  module Quic
+    class Packet
+      class QuicHeader
+        attr_accessor is_long_header: bool
+        attr_accessor version: Integer?
+        attr_accessor packet_type: Integer
+        attr_accessor destination_cid: String
+        attr_accessor source_cid: String
+        attr_accessor token: String
+        attr_accessor integrity_tag: String
+        attr_accessor rest_length: Integer
+      end
+
+      class QuicPreferredAddress
+        attr_accessor ipv4_address: ::Hash[::Symbol, untyped]?
+        attr_accessor ipv6_address: ::Hash[::Symbol, untyped]?
+        attr_accessor connection_id: ::String
+        attr_accessor stateless_reset_token: ::String
+      end
+
+      class QuicTransportParameters
+        attr_accessor original_destination_connection_id: ::String?
+        attr_accessor max_idle_timeout: ::Integer?
+        attr_accessor stateless_reset_token: ::String?
+        attr_accessor max_udp_payload_size: ::Integer?
+        attr_accessor initial_max_data: ::Integer?
+        attr_accessor initial_max_stream_data_bidi_local: ::Integer?
+        attr_accessor initial_max_stream_data_bidi_remote: ::Integer?
+        attr_accessor initial_max_stream_data_uni: ::Integer?
+        attr_accessor initial_max_streams_bidi: ::Integer?
+        attr_accessor initial_max_streams_uni: ::Integer?
+        attr_accessor ack_delay_exponent: ::Integer?
+        attr_accessor max_ack_delay: ::Integer?
+        attr_accessor disable_active_migration: bool?
+        attr_accessor preferred_address: QuicPreferredAddress?
+        attr_accessor active_connection_id_limit: ::Integer?
+        attr_accessor initial_source_connection_id: ::String?
+        attr_accessor retry_source_connection_id: ::String?
+        attr_accessor max_datagram_frame_size: ::Integer?
+        attr_accessor quantum_readiness: ::String?
+      end
+
+      PARAMS: ::Hash[::Integer, ::Hash[::Symbol, ::Symbol]]
+
+      def self.decode_packet_number: (truncated: Integer, num_bits: Integer, expected: Integer) -> Integer
+      def self.get_retry_integrity_tag: (packet_without_tag: String, original_destination_cid: String) -> String
+      def self.get_spin_bit: (::Integer) -> bool
+      def self.is_draft_version: (::Integer) -> FalseClass
+      def self.is_long_header: (::Integer) -> bool
+      def self.pull_quic_header: (buf: ::Raioquic::Buffer, host_cid_length: ::Integer) -> QuicHeader
+      def self.encode_quic_retry: (version: untyped, source_cid: ::String, destination_cid: ::String, original_destination_cid: ::String, retry_token: ::String:writing) -> ::String
+      def self.encode_quic_version_negotiation: (source_cid: ::String, destination_cid: ::String, supported_versions: ::Array[untyped]) -> ::String
+      def self.pull_quic_preferred_address: (::Raioquic::Buffer) -> untyped
+      def self.push_quic_preferred_address: (buf: ::Raioquic::Buffer, preferred_address: QuicPreferredAddress) -> void
+      def self.pull_quic_transport_parameters: (::Raioquic::Buffer) -> QuicTransportParameters
+      def self.push_quic_transport_parameters: (buf: ::Raioquic::Buffer, params: QuicTransportParameters) -> void
+
+      private def self.get_urandom_byte: -> ::Integer
+
+      def self.pull_ack_frame: (::Raioquic::Buffer) -> untyped
+      def self.push_ack_frame: (buf: ::Raioquic::Buffer, rangeset: Rangeset, delay: ::Integer) -> ::Integer
+
+      class QuicFrameType
+      end
+
+      NON_ACK_ELICITING_FRAME_TYPES: ::Array[::Integer]
+
+    end
+  end
+end
