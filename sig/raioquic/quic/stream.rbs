@@ -1,0 +1,82 @@
+module Raioquic::Quic::Stream
+  class FinalSizeError < StandardError
+  end
+
+  class StreamFinishedError < StandardError
+  end
+
+  class QuicStreamReceiver
+    attr_reader is_finished: bool
+    attr_reader buffer: ::String
+    attr_reader ranges: ::Raioquic::Quic::Rangeset
+    attr_reader buffer_start: ::Integer
+    attr_reader highest_offset: ::Integer
+    attr_reader stop_pending: bool
+
+    @highest_offset: ::Integer
+    @is_finished: bool
+    @stop_pending: bool
+    @buffer: ::String
+    @buffer_start: ::Integer
+    @final_size: ::Integer | nil
+    @ranges: ::Raioquic::Quic::Rangeset
+    @stream_id: ::Integer | nil
+    @stop_error_code: ::Integer | nil
+
+    def initialize: (?stream_id: ::Integer | nil, ?readable: bool) -> void
+    def get_stop_frame: () -> ::Raioquic::Quic::Packet::QuicStopSendingFrame
+    def handle_frame: (frame: ::Raioquic::Quic::Packet::QuicStreamFrame) -> (::Raioquic::Quic::Event::StreamDataReceived | nil)
+    def handle_reset: (final_size: :Integer, error_code: ::Integer) -> (::Raioquic::Quic::Event::StreamReset | nil)
+    def on_stop_sending_delivery: (delivery: ::Integer) -> void
+    def stop: (error_code: ::Integer) -> void
+    def pull_data: () -> ::String
+  end
+
+  class QuicStreamSender
+    attr_reader is_finished: bool
+    attr_reader buffer: ::String
+    attr_reader highest_offset: ::Integer
+    attr_reader pending: ::Raioquic::Quic::Rangeset
+    attr_reader buffer_is_empty: bool
+    attr_reader reset_pending: bool
+
+    @buffer_is_empty: bool
+    @highest_offset: ::Integer
+    @is_finished: bool
+    @reset_pending: bool
+    @acked: ::Raioquic::Quic::Rangeset
+    @buffer: ::String
+    @buffer_fin: ::Integer | nil
+    @buffer_start: ::Integer
+    @buffer_stop: ::Integer
+    @pending: ::Raioquic::Quic::Rangeset
+    @pending_eof: bool
+    @reset_error_code: ::Integer | nil
+    @stream_id: ::Integer | nil
+
+    def initialize: (?stream_id: ::Integer | nil, writable: bool) -> void
+    def next_ofset: () -> ::Integer
+    def get_frame: (max_size: ::Integer, ?max_offset: ::Integer | nil) -> (::Raioquic::Quic::Packet::QuicStreamFrame | nil)
+    def get_reset_frame: () -> ::Raioquic::Quic::Packet::QuicResetStreamFrame
+    def on_data_delivery: (delivery: ::Integer, start: ::Integer, stop: ::Integer) -> void
+    def on_reset_delivery: (delivery: ::Integer) -> void
+    def reset: (error_code: ::Integer) -> void
+    def write: (data: ::String, ?end_stream: bool) -> void
+  end
+
+  class QuicStream
+    attr_reader receiver: QuicStreamReceiver
+    attr_reader sender: QuicStreamSender
+
+    @is_blocked: bool
+    @max_stream_data_local: ::Integer
+    @max_stream_data_local_sent: ::Integer
+    @max_stream_data_remote: ::Integer
+    @receiver: QuicStreamReceiver
+    @sender: QuicStreamSender
+    @stream_id: ::Integer | nil
+
+    def initialize: (?stream_id: ::Integer | nil, ?max_stream_data_local: ::Integer, ?max_stream_data_remote: ::Integer, ?readable: bool, ?writable: bool) -> bool
+    def is_finished: () -> bool
+  end
+end
