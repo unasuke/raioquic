@@ -414,22 +414,22 @@ module Raioquic
         QuicFrameType::NEW_CONNECTION_ID,
       ].freeze
 
-      class QuicResetStreamFrame
-        attr_accessor :error_code
-        attr_accessor :final_size
-        attr_accessor :stream_id
-      end
+      QuicResetStreamFrame = _ = Struct.new( # rubocop:disable Naming/ConstantName
+        :error_code,
+        :final_size,
+        :stream_id,
+      )
 
-      class QuicStopSendingFrame
-        attr_accessor :error_code
-        attr_accessor :stream_id
-      end
+      QuicStopSendingFrame = _ = Struct.new( # rubocop:disable Naming/ConstantName
+        :error_code,
+        :stream_id,
+      )
 
-      class QuicStreamFrame
-        attr_accessor :data
-        attr_accessor :fin
-        attr_accessor :offset
-      end
+      QuicStreamFrame = _ = Struct.new( # rubocop:disable Naming/ConstantName
+        :data,
+        :fin,
+        :offset,
+      )
 
       def self.pull_ack_frame(buf)
         rangeset = Rangeset.new
