@@ -63,7 +63,7 @@ class TestRaioquicQuicPacketBuilder < Minitest::Test
     assert_equal 1, builder.packet_number
   end
 
-  def test_long_header_initial_client_2 # rubocop:disable Metrics/MethodLength
+  def test_long_header_initial_client_2
     builder = create_builder(is_client: true)
     crypto = create_crypto
 
@@ -163,7 +163,7 @@ class TestRaioquicQuicPacketBuilder < Minitest::Test
     assert_equal [sent_packet], packets
   end
 
-  def test_long_header_then_short_header # rubocop:disable Metrics/MethodLength
+  def test_long_header_then_short_header
     builder = create_builder
     crypto = create_crypto
 
@@ -212,7 +212,7 @@ class TestRaioquicQuicPacketBuilder < Minitest::Test
     assert_equal [sent_packet1, sent_packet2], packets
   end
 
-  def test_long_header_then_long_header # rubocop:disable Metrics/MethodLength
+  def test_long_header_then_long_header
     builder = create_builder
     crypto = create_crypto
 
@@ -444,7 +444,7 @@ class TestRaioquicQuicPacketBuilder < Minitest::Test
     assert_equal 1, builder.packet_number
   end
 
-  def test_short_header_max_total_bytes_3 # rubocop:disable Metrics/MethodLength
+  def test_short_header_max_total_bytes_3
     builder = create_builder
     builder.max_total_bytes = 2000
 

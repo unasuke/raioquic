@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-# rubocop:disable Metrics/MethodLength, Metrics/BlockLength
+# rubocop:disable Metrics/BlockLength
 class TestRaioquicTLS < Minitest::Test
   TLS = ::Raioquic::TLS # for shorthand
 
@@ -1206,4 +1206,4 @@ class TestRaioquicTLS < Minitest::Test
     end
   end
 end
-# rubocop:enable Metrics/MethodLength, Metrics/BlockLength
+# rubocop:enable Metrics/BlockLength

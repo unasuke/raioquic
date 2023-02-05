@@ -18,6 +18,8 @@ Metrics/ClassLength:
 
 Metrics/MethodLength:
   Max: 30
+  Exclude:
+    - "test/**/test_*.rb"
 
 Metrics/ParameterLists:
   Enabled: false

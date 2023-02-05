@@ -5,7 +5,7 @@ require "test_helper"
 class TestRaioquicQuicRecoveryQuicRttMonitor < Minitest::Test
   Recovery = ::Raioquic::Quic::Recovery
 
-  def test_monitor # rubocop:disable Metrics/MethodLength
+  def test_monitor
     monitor = Recovery::QuicRttMonitor.new
 
     assert_equal false, monitor.is_rtt_increasing(rtt: 10, now: 1000)

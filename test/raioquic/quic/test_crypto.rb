@@ -196,7 +196,7 @@ class TestRaioquicQuicCrypto < Minitest::Test
     assert_equal SHORT_SERVER_ENCRYPTED_PACKET, packet
   end
 
-  def test_key_update # rubocop:disable Metrics/MethodLength
+  def test_key_update
     pair1 = create_crypto(is_client: true)
     pair2 = create_crypto(is_client: false)
 
