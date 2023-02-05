@@ -15,7 +15,7 @@ module Raioquic
       class ConnectionTerminated < QuicEvent
         attr_accessor error_code: ::Integer
         attr_accessor frame_type: ::Integer | nil
-        attr_accessor reson_phase: ::String
+        attr_accessor reson_phrase: ::String
       end
 
       class DatagramFrameReceived < QuicEvent
