@@ -4,7 +4,15 @@ module Raioquic
   module Quic
     module Event
       # Base class for QUIC events.
-      class QuicEvent # rubocop:disable Lint/EmptyClass
+      # Should be implement by Struct?
+      class QuicEvent
+        def ==(other)
+          return false if self.class != other.class
+
+          return false if instance_variables != other.instance_variables
+
+          return instance_variables.all? { |iver| instance_variable_get(iver) == other.instance_variable_get(iver) }
+        end
       end
 
       class ConnectionIdIssued < QuicEvent
