@@ -8,6 +8,8 @@ require_relative "quic/configuration"
 require_relative "quic/recovery"
 require_relative "quic/event"
 require_relative "quic/stream"
+require_relative "quic/connection"
+require_relative "quic/logger"
 
 module Raioquic
   # Raioquic::Quic
