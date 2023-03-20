@@ -357,8 +357,8 @@ module Raioquic
 
           # TODO: logger debug if crypto_scheduled && @logger
 
-          # ensure an ACK-elliciting packet is sent
-          send_probe
+          # ensure an ACK-eliciting packet is sent
+          @send_probe&.call
         end
 
         # Check whether any packets should be declared lost.
