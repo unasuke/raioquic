@@ -257,7 +257,7 @@ module Raioquic
         0x0b => { name: :max_ack_delay, type: :int },
         0x0c => { name: :disable_active_migration, type: :bool },
         0x0d => { name: :preferred_address, type: :quicpreferredaddress },
-        0x0e => { name: :active_connection_id_limit, type: :bytes },
+        0x0e => { name: :active_connection_id_limit, type: :int },
         0x0f => { name: :initial_source_connection_id, type: :bytes },
         0x10 => { name: :retry_source_connection_id, type: :bytes },
         # extensions
