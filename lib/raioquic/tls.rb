@@ -956,9 +956,13 @@ module Raioquic
       attr_reader :dec_key
       attr_reader :key_schedule
       attr_reader :alpn_negotiated
+      attr_reader :received_extensions
+      attr_reader :early_data_accepted
+
       attr_accessor :state
       attr_accessor :handshake_extensions
       attr_accessor :certificate
+      attr_accessor :certificate_chain
       attr_accessor :certificate_private_key
       attr_accessor :supported_groups
       attr_accessor :supported_versions
@@ -966,6 +970,8 @@ module Raioquic
       attr_accessor :new_session_ticket_cb
       attr_accessor :get_session_ticket_cb
       attr_accessor :session_ticket
+      attr_accessor :alpn_cb
+      attr_accessor :update_traffic_key_cb
 
       def initialize(is_client:, alpn_protocols: [], cadata: nil, cafile: nil, capath: nil, cipher_suites: nil, logger: nil, max_early_data: nil, server_name: nil, verify_mode: nil) # rubocop:disable Layout/LineLength, Metrics/MethodLength
         @alpn_protocols = alpn_protocols

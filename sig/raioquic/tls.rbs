@@ -343,6 +343,28 @@ module Raioquic
       type session_ticket_fetcher = ^(::String) -> (SessionTicket | nil)
       type session_ticket_handler = ^(SessionTicket) -> void
 
+      attr_reader session_resumed: bool
+      attr_reader enc_key: ::String | nil
+      attr_reader dec_key: ::String | nil
+      attr_reader key_schedule: KeySchedule | nil
+      attr_reader alpn_negotiated: ::String | nil
+      attr_reader received_context: ::Array[tls_extension] | nil
+      attr_reader early_data_accepted: bool
+
+      attr_accessor state: ::Integer
+      attr_accessor handshake_extensions: ::Array[tls_extension]
+      attr_accessor certificate: ::OpenSSL::X509::Certificate | nil
+      attr_accessor certificate_chain: ::Array[::OpenSSL::X509::Certificate]
+      attr_accessor certificate_private_key: ::OpenSSL::PKey | nil
+      attr_accessor supported_groups: ::Array[::Integer]
+      attr_accessor supported_versions: ::Array[::Integer]
+      attr_accessor signature_algorithms: ::Array[::Integer]
+      attr_accessor new_session_ticket_cb: session_ticket_handler | nil
+      attr_accessor get_session_ticket_cb: session_ticket_fetcher | nil
+      attr_accessor session_ticket: SessionTicket | nil
+      attr_accessor alpn_cb: alpn_handler | nil
+      attr_accessor update_traffic_key_cb: ::Proc
+
       @alpn_protocols: ::Array[::String]
       @cadata: ::String | nil
       @cafile: ::String | nil
