@@ -39,7 +39,9 @@ module Raioquic
       end
       module_function :xor_str
 
-      class NoCallback; end # rubocop:disable Lint/EmptyClass
+      class NoCallback
+        def call(_); end
+      end
 
       # CryptoContext
       # represent sender or receiver crypto context
@@ -103,14 +105,27 @@ module Raioquic
           @hp = HeaderProtection.new(cipher_name: hp_cipher_name, key: hp)
           @secret = secret
           @version = version
+
+          # trigger callback
+          @setup_cb&.call("tls")
         end
 
-        def teardown; end
+        def teardown
+          @aead = nil
+          @cipher_suite = nil
+          @hp = nil
+
+          # trigger callback
+          @teardown_cb&.call("tls")
+        end
 
         def apply_key_phase(crypto, _trigger)
           @aead = crypto.aead
           @key_phase = crypto.key_phase
           @secret = crypto.secret
+
+          # trigger callback
+          @setup_cb&.call("tls")
         end
 
         def next_key_phase
@@ -179,7 +194,10 @@ module Raioquic
           )
         end
 
-        def teardown; end
+        def teardown
+          @recv.teardown
+          @send.teardown
+        end
 
         def key_phase
           if @update_key_requested
