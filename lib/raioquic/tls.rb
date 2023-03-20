@@ -1402,8 +1402,10 @@ module Raioquic
         signature_algorithm = TLS.negotiate(supported: signature_algorithms, offered: peer_hello.signature_algorithms, exc: AlertHandshakeFailure)
         supported_version = TLS.negotiate(supported: @supported_versions, offered: peer_hello.supported_versions, exc: AlertProtocolVersion)
 
+        # binding.irb
         # negotiate alpn
-        unless @alpn_protocols.empty?
+        if @alpn_protocols
+          # binding.irb
           @alpn_negotiated = TLS.negotiate(supported: @alpn_protocols, offered: peer_hello.alpn_protocols, exc: AlertHandshakeFailure)
         end
         @alpn_cb&.call(@alpn_negotiated)
@@ -1509,7 +1511,7 @@ module Raioquic
           TLS.push_message(key_schedule: @key_schedule, buf: handshake_buf) do
             cert = Certificate.new.tap do |c|
               c.request_context = ""
-              c.certificates = ([@certificate] + @certificate_chain).map { |x| [x.to_der, ""] }
+              c.certificates = ([@certificate] + (@certificate_chain || [])).map { |x| [x.to_der, ""] }
             end
             TLS.push_certificate(buf: handshake_buf, certificate: cert)
           end
