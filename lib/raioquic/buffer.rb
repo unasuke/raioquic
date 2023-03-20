@@ -12,6 +12,7 @@ module Raioquic
     BufferReadError = Class.new(StandardError)
     BufferWriteError = Class.new(StandardError)
 
+    UINT_VAR_MAX = 0x3fffffffffffffff
     UINT_VAR_MAX_SIZE = 8
 
     def_delegator :@buffer, :eof, :eof

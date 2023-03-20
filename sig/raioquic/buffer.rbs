@@ -2,6 +2,7 @@ module Raioquic
   class Buffer
     # extend Forwardable
 
+    UINT_VAR_MAX: ::Integer
     UINT_VAR_MAX_SIZE: 8
 
     class BufferReadError < StandardError
