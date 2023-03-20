@@ -29,14 +29,43 @@ module Raioquic
 
       class QuicPacketBuilder
         attr_reader packet_number: ::Integer
-        attr_accessor max_flight_bytes: ::Integer
-        attr_accessor max_total_bytes: ::Integer
+        attr_reader quic_logger_frames: ::Array[untyped] | nil
+        attr_accessor max_flight_bytes: ::Integer | nil
+        attr_accessor max_total_bytes: ::Integer | nil
 
-        def initialize: (host_cid: ::String, peer_cid: ::String, version: ::Integer, is_client: bool, packet_number: ::Integer, peer_token: ::String, ?quic_logger: untyped?, ?spin_bit: bool) -> void
+        @packet: QuicSentPacket | nil
+        @max_flight_bytes: ::Integer | nil
+        @max_total_bytes: ::Integer | nil
+        @quic_logger_frames: ::Array[untyped] | nil
+        @host_cid: ::String
+        @peer_cid: ::String
+        @is_client: bool
+        @peer_token: ::String
+        @quic_logger: ::Raioquic::Quic::Logger::QuicLoggerTrace
+        @spin_bit: bool
+        @version: ::Integer
+        @datagrams: ::Array[::String]
+        @datagram_flight_bytes: ::Integer
+        @datagram_init: bool
+        @packets: ::Array[QuicSentPacket]
+        @flight_bytes: ::Integer
+        @total_bytes: ::Integer
+        @header_size: ::Integer
+        @packet: untyped
+        @packet_crypto: untyped
+        @packet_long_header: bool
+        @packet_number: ::Integer
+        @packet_start: ::Integer
+        @packet_type: ::Integer
+        @buffer: Buffer
+        @buffer_capacity: ::Integer
+        @flight_capacity: ::Integer
+
+        def initialize: (host_cid: ::String, peer_cid: ::String, version: ::Integer, is_client: bool, ?packet_number: ::Integer, ?peer_token: ::String, ?quic_logger: untyped?, ?spin_bit: bool) -> void
         def packet_is_empty: () -> bool
         def remaining_buffer_space: () -> ::Integer
         def remaining_flight_space: () -> ::Integer
-        def flush: () -> ::Array[::Array[::String]]
+        def flush: () -> [::Array[::String], ::Array[QuicSentPacket]]
         def start_frame: (frame_type: ::Integer, ?capacity: ::Integer, ?handler: untyped?, ?handler_args: untyped) -> ::Raioquic::Buffer
         def start_packet: (packet_type: ::Integer, crypto: ::Raioquic::Quic::Crypto::CryptoPair) -> void
         def end_packet: () -> void

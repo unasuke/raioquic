@@ -35,11 +35,12 @@ module Raioquic
       # Helper for building QUIC packets.
       class QuicPacketBuilder
         attr_reader :packet_number
+        attr_reader :quic_logger_frames
         attr_accessor :max_flight_bytes
         attr_accessor :max_total_bytes
 
         # Helper for building QUIC packets.
-        def initialize(host_cid:, peer_cid:, version:, is_client:, packet_number:, peer_token:, quic_logger: nil, spin_bit: false)
+        def initialize(host_cid:, peer_cid:, version:, is_client:, packet_number: 0, peer_token: "", quic_logger: nil, spin_bit: false)
           @max_flight_bytes = nil
           @max_total_bytes = nil
           @quic_logger_frames = nil
@@ -77,7 +78,12 @@ module Raioquic
           raise RuntimeError unless @packet
 
           packet_size = @buffer.tell - @packet_start
+          # puts "*** Builder#packet_is_empty packet_size: #{packet_size}, header_size: #{@header_size}, buffer#tell: #{@buffer.tell}, @packet_start: #{@packet_start}"
           return packet_size <= @header_size
+        end
+
+        def _packet_size
+          @buffer.tell - @packet_start
         end
 
         # Returns the remaining number of bytes which can be used in the current packet.
@@ -95,8 +101,8 @@ module Raioquic
           end_packet if @packet
 
           flush_current_datagram
-          datagrams = @datagrams
-          packets = @packets
+          datagrams = @datagrams.dup
+          packets = @packets.dup
           @datagrams = []
           @packets = []
           return [datagrams, packets]
@@ -115,7 +121,8 @@ module Raioquic
           @packet.in_flight = true unless Quic::Packet::NON_IN_FLIGHT_FRAME_TYPES.include?(frame_type)
           @packet.is_crypto_packet = true if frame_type == Quic::Packet::QuicFrameType::CRYPTO
           if handler
-            @packet.delivery_handlers.append(handler, handler_args) # TODO: what's this?
+            # pp handler_args
+            @packet.delivery_handlers.append([handler, handler_args]) # TODO: what's this?
           end
           return @buffer
         end
@@ -160,13 +167,13 @@ module Raioquic
           # calculate header size
           packet_long_header = Quic::Packet.is_long_header(packet_type)
           if packet_long_header
-            header_size = 11 + @peer_cid.length + @host_cid.length
+            header_size = 11 + @peer_cid.bytesize + @host_cid.bytesize
             if (packet_type & Quic::Packet::PACKET_TYPE_MASK) == Quic::Packet::PACKET_TYPE_INITIAL
-              token_length = @peer_token.length
+              token_length = @peer_token.bytesize
               header_size += Buffer.size_uint_var(token_length) + token_length
             end
           else
-            header_size = 3 + @peer_cid.length
+            header_size = 3 + @peer_cid.bytesize
           end
 
           # check we have enough space
@@ -191,7 +198,8 @@ module Raioquic
             p.is_crypto_packet = false
             p.packet_number = @packet_number
             p.packet_type = packet_type
-            p.quic_logger_frames = [] # TODO: ?
+            p.delivery_handlers = []
+            p.quic_logger_frames = []
           end
           @packet_crypto = crypto
           @packet_long_header = packet_long_header
@@ -223,7 +231,7 @@ module Raioquic
 
               # log frame
               if @quic_logger
-                @packet.quic_logger_frames.append(@quic_logger.encode_padding_frame) # TODO: ?
+                @packet.quic_logger_frames << @quic_logger.encode_padding_frame
               end
             end
 
