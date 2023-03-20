@@ -57,6 +57,7 @@ class TestRaioquicQuicPacketBuilder < Minitest::Test
       p.packet_number = 0
       p.packet_type = ::Raioquic::Quic::Packet::PACKET_TYPE_INITIAL
       p.sent_bytes = 1280
+      p.delivery_handlers = []
       p.quic_logger_frames = []
     end
     assert_equal [sent_packet], packets
@@ -94,6 +95,7 @@ class TestRaioquicQuicPacketBuilder < Minitest::Test
       p.packet_number = 0
       p.packet_type = ::Raioquic::Quic::Packet::PACKET_TYPE_INITIAL
       p.sent_bytes = 1280
+      p.delivery_handlers = []
       p.quic_logger_frames = []
     end
     sent_packet2 = ::Raioquic::Quic::PacketBuilder::QuicSentPacket.new.tap do |p|
@@ -104,6 +106,7 @@ class TestRaioquicQuicPacketBuilder < Minitest::Test
       p.packet_number = 1
       p.packet_type = ::Raioquic::Quic::Packet::PACKET_TYPE_INITIAL
       p.sent_bytes = 1280
+      p.delivery_handlers = []
       p.quic_logger_frames = []
     end
     assert_equal [sent_packet1, sent_packet2], packets
@@ -133,6 +136,7 @@ class TestRaioquicQuicPacketBuilder < Minitest::Test
       p.packet_number = 0
       p.packet_type = ::Raioquic::Quic::Packet::PACKET_TYPE_INITIAL
       p.sent_bytes = 145
+      p.delivery_handlers = []
       p.quic_logger_frames = []
     end
     assert_equal [sent_packet], packets
@@ -158,6 +162,7 @@ class TestRaioquicQuicPacketBuilder < Minitest::Test
       p.packet_number = 0
       p.packet_type = ::Raioquic::Quic::Packet::PACKET_TYPE_HANDSHAKE
       p.sent_bytes = 45
+      p.delivery_handlers = []
       p.quic_logger_frames = []
     end
     assert_equal [sent_packet], packets
@@ -197,6 +202,7 @@ class TestRaioquicQuicPacketBuilder < Minitest::Test
       p.packet_number = 0
       p.packet_type = ::Raioquic::Quic::Packet::PACKET_TYPE_INITIAL
       p.sent_bytes = 1280
+      p.delivery_handlers = []
       p.quic_logger_frames = []
     end
     sent_packet2 = ::Raioquic::Quic::PacketBuilder::QuicSentPacket.new.tap do |p|
@@ -207,6 +213,7 @@ class TestRaioquicQuicPacketBuilder < Minitest::Test
       p.packet_number = 1
       p.packet_type = ::Raioquic::Quic::Packet::PACKET_TYPE_ONE_RTT
       p.sent_bytes = 1280
+      p.delivery_handlers = []
       p.quic_logger_frames = []
     end
     assert_equal [sent_packet1, sent_packet2], packets
@@ -245,6 +252,7 @@ class TestRaioquicQuicPacketBuilder < Minitest::Test
       p.packet_number = 0
       p.packet_type = ::Raioquic::Quic::Packet::PACKET_TYPE_INITIAL
       p.sent_bytes = 244
+      p.delivery_handlers = []
       p.quic_logger_frames = []
     end
     sent_packet2 = ::Raioquic::Quic::PacketBuilder::QuicSentPacket.new.tap do |p|
@@ -255,6 +263,7 @@ class TestRaioquicQuicPacketBuilder < Minitest::Test
       p.packet_number = 1
       p.packet_type = ::Raioquic::Quic::Packet::PACKET_TYPE_HANDSHAKE
       p.sent_bytes = 343
+      p.delivery_handlers = []
       p.quic_logger_frames = []
     end
     sent_packet3 = ::Raioquic::Quic::PacketBuilder::QuicSentPacket.new.tap do |p|
@@ -265,6 +274,7 @@ class TestRaioquicQuicPacketBuilder < Minitest::Test
       p.packet_number =  2
       p.packet_type = ::Raioquic::Quic::Packet::PACKET_TYPE_ONE_RTT
       p.sent_bytes = 327
+      p.delivery_handlers = []
       p.quic_logger_frames = []
     end
     assert_equal [sent_packet1, sent_packet2, sent_packet3], packets
@@ -306,6 +316,7 @@ class TestRaioquicQuicPacketBuilder < Minitest::Test
       p.packet_number = 0
       p.packet_type = ::Raioquic::Quic::Packet::PACKET_TYPE_ONE_RTT
       p.sent_bytes = 1280
+      p.delivery_handlers = []
       p.quic_logger_frames = []
     end
     assert_equal [sent_packet], packets
@@ -340,6 +351,7 @@ class TestRaioquicQuicPacketBuilder < Minitest::Test
       p.packet_number = 0
       p.packet_type = ::Raioquic::Quic::Packet::PACKET_TYPE_ONE_RTT
       p.sent_bytes = 1000
+      p.delivery_handlers = []
       p.quic_logger_frames = []
     end
     assert_equal [sent_packet], packets
@@ -388,6 +400,7 @@ class TestRaioquicQuicPacketBuilder < Minitest::Test
       p.packet_number = 0
       p.packet_type = ::Raioquic::Quic::Packet::PACKET_TYPE_ONE_RTT
       p.sent_bytes = 92
+      p.delivery_handlers = []
       p.quic_logger_frames = []
     end
     assert_equal [sent_packet], packets
@@ -438,6 +451,7 @@ class TestRaioquicQuicPacketBuilder < Minitest::Test
       p.packet_number = 0
       p.packet_type = ::Raioquic::Quic::Packet::PACKET_TYPE_ONE_RTT
       p.sent_bytes = 800
+      p.delivery_handlers = []
       p.quic_logger_frames = []
     end
     assert_equal [sent_packet], packets
@@ -478,6 +492,7 @@ class TestRaioquicQuicPacketBuilder < Minitest::Test
       p.packet_number = 0
       p.packet_type = ::Raioquic::Quic::Packet::PACKET_TYPE_ONE_RTT
       p.sent_bytes = 1280
+      p.delivery_handlers = []
       p.quic_logger_frames = []
     end
     sent_packet2 = ::Raioquic::Quic::PacketBuilder::QuicSentPacket.new.tap do |p|
@@ -488,6 +503,7 @@ class TestRaioquicQuicPacketBuilder < Minitest::Test
       p.packet_number = 1
       p.packet_type = ::Raioquic::Quic::Packet::PACKET_TYPE_ONE_RTT
       p.sent_bytes = 720
+      p.delivery_handlers = []
       p.quic_logger_frames = []
     end
     assert_equal [sent_packet1, sent_packet2], packets
@@ -513,6 +529,7 @@ class TestRaioquicQuicPacketBuilder < Minitest::Test
       p.packet_number = 0
       p.packet_type = ::Raioquic::Quic::Packet::PACKET_TYPE_ONE_RTT
       p.sent_bytes = 29
+      p.delivery_handlers = []
       p.quic_logger_frames = []
     end
     assert_equal [sent_packet], packets
