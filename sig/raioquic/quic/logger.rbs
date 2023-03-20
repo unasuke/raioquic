@@ -1,0 +1,57 @@
+module Raioquic
+  module Quic
+    module Logger
+      QLOG_VERSION: ::String
+
+      class QuicLoggerTrace
+        PACKET_TYPE_NAMES: ::Hash[::Integer, ::String]
+        @odcid: ::String
+        @events: ::Array[untyped]
+        @vantage_point: { name: ::String, type: ("client"|"server")}
+
+        def initialize: (is_client: bool, odcid: ::String) -> void
+        def encode_ack_frame: (ranges: ::Raioquic::Quic::Rangeset, delay: ::Float) -> { ack_delay: ::Float, acked_ranges: ::Array[untyped], frame_type: "ack" }
+        # type connection_close_frame_attrs = { error_code: ::Integer, error_space: ("application"|"transport"), frame_type: "connection_close", raw_error_code: ::Integer, reason: ::String }
+        def encode_connection_close_frame: (error_code: ::Integer, ?frame_type: (::Integer | nil), reason_phrase: ::String) -> ::Hash[::Symbol, (::String|::Integer)]
+                                        #  (connection_close_frame_attrs | (connection_close_frame_attrs & { triggerr_frame_type: ("unidirectional"|"bidirectional")}))
+          # { error_code: ::Integer, error_space: ("application"|"transport"), frame_type: "connection_close", raw_error_code: ::Integer, reason: ::String, triggerr_frame_type: ::Integer }
+        def encode_connection_limit_frame: (frame_type: ::Integer, maximum: ::Integer) -> ({ frame_type: "max_data", maximum: ::Integer } | { frame_type: "max_streams", maximum: ::Integer, stream_type: ("unidirectional"|"bidirectional") })
+        def encode_crypto_frame: (frame: ::Raioquic::Quic::Packet::QuicStreamFrame) -> { frame_type: "crypto", length: ::Integer, offset: ::Integer }
+        def encode_data_blocked_frame: (limit: ::Integer) -> { frame_type: "data_blocked", limit: ::Integer }
+        def encode_datagram_frame: (length: ::Integer) -> { frame_type: "datagram", length: ::Integer }
+        def encode_handshake_done_frame: () -> { frame_type: "handshake_done" }
+        def encode_max_stream_data_frame: (maximum: ::Integer, stream_id: ::String) -> { frame_type: "max_stream_data", maximum: ::Integer, stream_id: ::String }
+        def encode_new_connection_id_frame: (connection_id: ::String, retire_prior_to: ::Integer, sequence_number: ::Integer, stateless_reset_token: ::String) ->
+                                          { connection_id: ::String, frame_type: "new_connection_id", length: ::Integer, reset_token: ::String, retire_prior_to: ::Integer, sequence_number: ::Integer }
+        def encode_new_token_frame: (token: ::String) -> { frame_type: "new_token", length: ::Integer, token: ::String }
+        def encode_padding_frame: () -> { frame_type: "padding" }
+        def encode_path_challenge_frame: (data: ::String) -> { frame_type: "path_challenge", data: ::String }
+        def encode_path_response_frame: (data: ::String) -> { frame_type: "path_response", data: ::String }
+        def encode_ping_frame: () -> { frame_type: "ping" }
+        def encode_reset_stream_frame: (error_code: ::Integer, final_size: ::Integer, stream_id: ::String) -> { error_code: ::Integer, final_size: ::Integer, frame_type: "reset_stream", stream_id: ::String }
+        def encode_retire_connection_id_frame: (sequence_number: ::Integer) -> { frame_type: "retire_connection_id", sequence_number: ::Integer }
+        def encode_stream_data_blocked_frame: (limit: ::Integer, stream_id: ::String) -> { frame_type: "stream_data_blocked", limit: ::Integer, stream_id: ::String }
+        def encode_stop_sending_frame: (error_code: ::Integer, stream_id: ::String) -> { frame_type: "stop_sending", error_code: ::Integer, stream_id: ::String }
+        def encode_stream_frame: (frame: ::Raioquic::Quic::Packet::QuicStreamFrame, stream_id: ::String) -> { fin: bool, frame_type: "stream", length: ::Integer, offset: ::Integer, stream_id: ::String }
+        def encode_streams_blocked_frame: (is_unidirectional: bool, limit: ::Integer) -> { frame_type: "streams_blocked", limit: ::Integer, stream_type: ("unidirectional"|"bidirectional") }
+        def encode_time: (::Float seconds) -> ::Float
+        def encode_transport_parameters: (owner: ::String, parameters: ::Raioquic::Quic::Packet::QuicTransportParameters) -> ::Hash[::Symbol, (::String|::Integer)]
+        def packet_type: (::Integer packet_type) -> ::String
+        def log_event: (category: ::String, event: ::String, data: ::Hash[::Symbol, untyped]) -> void
+        def to_dict: () -> ::Hash[::Symbol, untyped]
+      end
+
+      class QuicLogger
+        def initialize: () -> void
+        def start_trace: (is_client: bool, odcid: ::String) -> QuicLoggerTrace
+        def to_dict: () -> { qlog_format: ::String, qlog_version: ::String, traces: ::Array[untyped] }
+        def end_trace: (QuicLoggerTrace trace) -> void
+      end
+
+      class QuicFileLogger < QuicLogger
+        def initialize: (path: ::String) -> void
+        # def end_trace: (QuicLoggerTrace trace) -> void
+      end
+    end
+  end
+end
