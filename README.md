@@ -28,7 +28,7 @@ $ gem install raioquic
 
 ## Usage
 
-See [test](test/).
+See [test](test/) and [example/](example/).
 
 ## Development
 
