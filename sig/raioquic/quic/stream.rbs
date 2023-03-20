@@ -55,7 +55,7 @@ module Raioquic::Quic::Stream
     @stream_id: ::Integer | nil
 
     def initialize: (?stream_id: ::Integer | nil, writable: bool) -> void
-    def next_ofset: () -> ::Integer
+    def next_offset: () -> ::Integer
     def get_frame: (max_size: ::Integer, ?max_offset: ::Integer | nil) -> (::Raioquic::Quic::Packet::QuicStreamFrame | nil)
     def get_reset_frame: () -> ::Raioquic::Quic::Packet::QuicResetStreamFrame
     def on_data_delivery: (delivery: ::Integer, start: ::Integer, stop: ::Integer) -> void

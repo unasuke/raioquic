@@ -96,7 +96,7 @@ module Raioquic
         @pacer: QuicPacketPacer
 
         def initialize: (initial_rtt: ::Float, peer_completed_address_validation: bool, ?send_probe: (^() -> untyped) | nil, ?logger: untyped, ?quic_logger: untyped) -> void
-        def descard_space: (space: QuicPacketSpace) -> void
+        def discard_space: (space: QuicPacketSpace) -> void
         def get_loss_detection_time: () -> ::Float
         def get_probe_timeout: () -> ::Float
         def on_ack_received: (space: QuicPacketSpace, ack_rangeset: Rangeset, ack_delay: ::Float, now: ::Float) -> void

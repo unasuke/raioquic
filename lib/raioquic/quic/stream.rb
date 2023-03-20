@@ -108,11 +108,11 @@ module Raioquic
         end
 
         # Handle an abrupt termination of the receiving part of the QUIC stream.
-        def handle_reset(finai_size:, error_code: Quic::Packet::QuicErrorCode::NO_ERROR)
-          raise FinalSizeError, "Cannot change final size" if @final_size && finai_size != @final_size
+        def handle_reset(final_size:, error_code: Quic::Packet::QuicErrorCode::NO_ERROR)
+          raise FinalSizeError, "Cannot change final size" if @final_size && final_size != @final_size
 
           # we are done receiving
-          @final_size = finai_size
+          @final_size = final_size
           @is_finished = true
           return Quic::Event::StreamReset.new.tap do |reset|
             reset.error_code = error_code

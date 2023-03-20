@@ -25,9 +25,9 @@ module Raioquic
 
       # The ConnectionTerminated event is fired when the QUIC connection is terminated.
       class ConnectionTerminated < QuicEvent
-        attr_accessor :error_code   # The error code which was specified when closing the connection.
-        attr_accessor :frame_type   # The frame type which caused the connection to be closed, or `None`.
-        attr_accessor :reson_phrase # The human-readable reason for which the connection was closed.
+        attr_accessor :error_code     # The error code which was specified when closing the connection.
+        attr_accessor :frame_type     # The frame type which caused the connection to be closed, or `None`.
+        attr_accessor :reason_phrase  # The human-readable reason for which the connection was closed.
       end
 
       # The DatagramFrameReceived event is fired when a DATAGRAM frame is received.

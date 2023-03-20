@@ -367,7 +367,7 @@ module Raioquic
 
       class QuicFrameType
         PADDING = 0x00
-        PING = 0x10
+        PING = 0x01
         ACK = 0x02
         ACK_ECN = 0x03
         RESET_STREAM = 0x04
