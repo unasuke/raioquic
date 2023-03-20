@@ -404,7 +404,7 @@ module Raioquic
             data[:rtt_variance] = @quic_logger&.encode_time(@rtt_variance)
           end
 
-          # TODO: @quic_logger&.log_event(category: "recovery", event: "metrics_updated", data: data)
+          @quic_logger&.log_event(category: "recovery", event: "metrics_updated", data: data)
         end
 
         def on_packets_lost(packets:, space:, now:) # rubocop:disable Metrics/CyclomaticComplexity
@@ -415,7 +415,16 @@ module Raioquic
             lost_packets_cc << packet if packet.in_flight
             space.ack_eliciting_in_flight -= 1 if packet.is_ack_eliciting
 
-            # TODO: if @quic_logger
+            if @quic_logger
+              @quic_logger.log_event(
+                category: "recovery",
+                event: "packet_lost",
+                data: {
+                  type: @quic_logger.packet_type(packet.packet_type),
+                  packet_number: packet.packet_number,
+                },
+              )
+            end
 
             # trigger callbacks
             packet.delivery_handlers&.each do |handler|
