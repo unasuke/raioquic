@@ -35,10 +35,10 @@ module Raioquic::Quic::Stream
   class QuicStreamSender
     attr_reader is_finished: bool
     attr_reader buffer: ::String
-    attr_reader highest_offset: ::Integer
     attr_reader pending: ::Raioquic::Quic::Rangeset
     attr_reader buffer_is_empty: bool
     attr_reader reset_pending: bool
+    attr_accessor highest_offset: ::Integer
 
     @buffer_is_empty: bool
     @highest_offset: ::Integer
@@ -67,6 +67,11 @@ module Raioquic::Quic::Stream
   class QuicStream
     attr_reader receiver: QuicStreamReceiver
     attr_reader sender: QuicStreamSender
+    attr_reader stream_id: ::Integer | nil
+    attr_accessor is_blocked: bool
+    attr_accessor max_stream_data_local: ::Integer
+    attr_accessor max_stream_data_local_sent: ::Integer
+    attr_accessor max_stream_data_remote: ::Integer
 
     @is_blocked: bool
     @max_stream_data_local: ::Integer

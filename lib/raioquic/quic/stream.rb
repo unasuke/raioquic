@@ -159,10 +159,10 @@ module Raioquic
       class QuicStreamSender
         attr_reader :is_finished
         attr_reader :buffer
-        attr_reader :highest_offset
         attr_reader :pending
         attr_reader :buffer_is_empty
         attr_reader :reset_pending
+        attr_accessor :highest_offset
 
         def initialize(stream_id: nil, writable:)
           @buffer_is_empty = true
@@ -318,6 +318,11 @@ module Raioquic
       class QuicStream
         attr_reader :receiver
         attr_reader :sender
+        attr_reader :stream_id
+        attr_accessor :is_blocked
+        attr_accessor :max_stream_data_local
+        attr_accessor :max_stream_data_local_sent
+        attr_accessor :max_stream_data_remote
 
         def initialize(stream_id: nil, max_stream_data_local: 0, max_stream_data_remote: 0, readable: true, writable: true)
           @is_blocked = false
