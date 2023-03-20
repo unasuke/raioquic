@@ -35,7 +35,7 @@ module Raioquic
         @alpn_protocols = kwargs[:alpn_protocols]
         @connection_id_length = kwargs[:connection_id_length] || 8
         @idle_timeout = kwargs[:idle_timeout] || 60.0
-        @is_client = kwargs[:is_client] || true
+        @is_client = kwargs[:is_client]
         @max_data = kwargs[:max_data] || 1048576
         @max_stream_data = kwargs[:max_stream_data] || 1048576
         @quic_logger = kwargs[:quic_logger]
