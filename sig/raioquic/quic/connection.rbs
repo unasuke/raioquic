@@ -1,0 +1,277 @@
+module Raioquic
+  module Quic
+    module Connection
+      CRYPTO_BUFFER_SIZE: ::Integer
+      EPOCH_SHORTCUTS: ::Hash[::String, ::Integer]
+      MAX_EARLY_DATA: ::Integer
+      SECRETS_LABELS: ::Array[::Array[::String | nil]]
+      STREAM_FLAGS: ::Integer
+      STREAM_COUNT_MAX: ::Integer
+      UDP_HEADER_SIZE: 8
+      ACK_FRAME_CAPACITY: ::Integer
+      APPLICATION_CLOSE_FRAME_CAPACITY: ::Integer
+      CONNECTION_LIMIT_FRAME_CAPACITY: ::Integer
+      HANDSHAKE_DONE_FRAME_CAPACITY: ::Integer
+      MAX_STREAM_DATA_FRAME_CAPACITY: ::Integer
+      NEW_CONNECTION_ID_FRAME_CAPACITY: ::Integer
+      PATH_CHALLENGE_FRAME_CAPACITY: ::Integer
+      PATH_RESPONSE_FRAME_CAPACITY: ::Integer
+      PING_FRAME_CAPACITY: ::Integer
+      RESET_STREAM_FRAME_CAPACITY: ::Integer
+      RETIRE_CONNECTION_ID_CAPACITY: ::Integer
+      STOP_SENDING_FRAME_CAPACITY: ::Integer
+      STREAMS_BLOCKED_CAPACITY: ::Integer
+      TRANSPORT_CLOSE_FLAME_CAPACITY: ::Integer
+
+      def self.epochs: (::String shortcut) -> ::Array[::Integer]
+      def self.dump_cid: (::String cid) -> ::String
+      def self.get_epoch: (::Integer packet_type) -> ::Integer
+      def self.get_transport_parameters_extension: (::Integer version) -> ::Integer
+      def self.stream_is_client_initialized: (::Integer stream_id) -> bool
+      def self.stream_is_unidirectional: (::Integer stream_id) -> bool
+
+      class Limit
+        @frame_type: ::Integer
+        @name: ::String
+        @sent: ::Integer
+        @used: ::Integer
+        @value: ::Integer
+
+        attr_reader frame_type: ::Integer
+
+        attr_accessor used: ::Integer
+        attr_accessor sent: ::Integer
+        attr_accessor value: ::Integer
+
+        def initialize: (frame_type: ::Integer, name: ::String, value: ::Integer) -> void
+      end
+
+      class QuicConnectionError < Error
+        @error_code: ::Integer
+        @frame_type: ::Integer
+        @reason_phrase: ::String
+      end
+
+      # TODO: QuicConnectionAdapter
+
+      class QuicConnectionId
+        attr_accessor cid: ::String
+        attr_accessor sequence_number: ::Integer
+        attr_accessor stateless_reset_token: ::String
+        attr_accessor was_sent: bool
+      end
+
+      class QuicConnectionState
+        FIRSTFLIGHT: 0
+        CONNECTED: 1
+        CLOSING: 2
+        DRAINING: 3
+        TERMINATED: 4
+      end
+
+      class QuicNetworkPath
+        attr_accessor addr: untyped
+        attr_accessor bytes_received: ::Integer
+        attr_accessor bytes_sent: ::Integer
+        attr_accessor is_validated: bool
+        attr_accessor local_challenge: ::String | nil
+        attr_accessor remote_challenge: ::String | nil
+
+        def can_send: (::Integer size) -> bool
+      end
+
+      class QuicReceiveContext
+        attr_accessor epoch: ::Integer
+        attr_accessor host_cid: ::String
+        attr_accessor network_path: QuicNetworkPath
+        attr_accessor quic_logger_frames: ::Array[untyped] | nil
+        attr_accessor time: ::Float
+      end
+
+      END_STATES: ::Array[::Integer]
+
+
+      class QuicConnection
+        attr_reader configuration: QuicConfiguration
+        attr_reader original_destination_connection_id: ::String
+        attr_reader loss: Quic::Recovery::QuicPacketRecovery
+        attr_reader tls: ::Raioquic::TLS::Context
+        attr_reader local_max_streams_bidi: Limit
+
+        attr_accessor ack_delay: ::Float
+        attr_accessor is_client: bool
+
+        @configuration: QuicConfiguration
+        @is_client: bool
+        @ack_delay: ::Float
+        @close_at: ::Float | nil
+        @close_event: untyped # TODO: events
+        @connect_called: bool
+        @cryptos: ::Hash[::Integer, ::Raioquic::Quic::Crypto::CryptoPair]
+        @crypto_buffers: ::Hash[::Integer, ::Raioquic::Buffer]
+        @crypto_retransmitted: bool
+        @crypto_streams: ::Hash[::Integer, ::Raioquic::Quic::Stream::QuicStream] # TODO: QuicStream
+        @events: untyped # TODO: deque?
+        @handshake_complete: bool
+        @handshake_confirmed: bool
+        @host_cids: ::Array[QuicConnectionId]
+        @host_cid: ::String
+        @host_cid_seq: ::Integer
+        @local_ack_delay_exponent: ::Integer
+        @local_active_connection_id_limit: ::Integer
+        @local_initial_source_connection_id: ::String
+        @local_max_data: Limit
+        @local_max_stream_data_bidi_local: ::Integer
+        @local_max_stream_data_bidi_remote: ::Integer
+        @local_max_stream_data_uni: ::Integer
+        @local_max_streams_bidi: Limit
+        @local_max_streams_uni: Limit
+        @loss_at: ::Float | nil
+        @network_paths: ::Array[QuicNetworkPath]
+        @pacing_at: ::Float | nil
+        @packet_number: ::Integer
+        @parameters_received: bool
+        @peer_cid: QuicConnectionId
+        @peer_cid_available: ::Array[QuicConnectionId]
+        @peer_cid_sequence_numbers: ::Array[::Integer] # TODO: set
+        @peer_token: ::String
+        @quic_logger: ::Raioquic::Quic::Logger::QuicLoggerTrace
+        @remote_ack_delay_exponent: ::Integer
+        @remote_active_connection_id_limit: ::Integer
+        @remote_initial_source_connection_id: ::String | nil
+        @remote_max_idle_timeout: ::Float
+        @remote_max_data: ::Integer
+        @remote_max_data_used: ::Integer
+        @remote_max_datagram_frame_size: ::Integer | nil
+        @remote_max_stream_data_bidi_local: ::Integer
+        @remote_max_stream_data_bidi_remote: ::Integer
+        @remote_max_stream_data_uni: ::Integer
+        @remote_max_streams_bidi: ::Integer
+        @remote_max_streams_uni: ::Integer
+        @retry_count: ::Integer
+        @retry_source_connection_id: ::String | nil
+        @spaces: ::Hash[::Integer, Quic::Recovery::QuicPacketSpace]
+        @spin_bit: bool
+        @spin_highest_pn: ::Integer
+        @state: ::Integer
+        @streams: ::Hash[::Integer, Quic::Stream::QuicStream] # TODO: QuicStream
+        @streams_blocked_bidi: ::Array[untyped] # TODO: QuicStream
+        @streams_blocked_uni: ::Array[untyped] # TODO: QuicStream
+        @streams_finished: ::Array[::Integer] # TODO: ::Set
+        @version: ::Integer | nil
+        @version_negotiation_count: ::Integer
+        @original_destination_connection_id: ::String
+        @logger: untyped
+        @loss: Quic::Recovery::QuicPacketRecovery
+        @close_pending: bool
+        @datagrams_pending: untyped # TODO: set
+        @handshake_done_pending: bool
+        @ping_pending: ::Array[::Integer]
+        @probe_pending: bool
+        @retire_connection_ids: ::Array[::Integer]
+        @streams_blocked_pending: bool
+        @session_ticket_fetcher: untyped
+        @session_ticket_handler: untyped
+        @frame_handlers: ::Hash[::Integer, [::Symbol, ::Array[::Integer]]]
+        @tls: ::Raioquic::TLS::Context
+
+        def intialize: (
+          configuration: QuicConfiguration,
+          ?original_destination_connection_id: ::String,
+          ?retry_source_connection_id: ::String,
+          ?session_ticket_fetcher: untyped,
+          ?session_ticket_handler: untyped,
+        ) -> void
+        def change_connection_id: () -> void
+        def close: (?error_code: ::Integer, ?frame_type: ::Integer|nil, ?reason_phrase: ::String) -> void
+        def connect: (addr: untyped, now: ::Float) -> void # TODO: type of addr
+        def datagrams_to_send: (now: ::Float) -> ::Array[[::String, untyped]] # TODO: NetworkAddress
+        def get_next_available_stream_id: (?is_unidirectional: bool) -> ::Integer
+        def get_timer: () -> (::Float | nil)
+        def handle_timer: (now: ::Float) -> void
+        def next_event: () -> (::Raioquic::Quic::Event::QuicEvent | nil)
+        def receive_datagram: (data: ::String, addr: untyped, now: ::Float) -> void # TODO: NetworkAddress
+        def request_key_update: () -> void
+        def reset_stream: (stream_id: ::Integer, error_code: ::Integer) -> void
+        def send_ping: (::Integer uid) -> void
+        def send_datagram_frame: (:String data) -> void
+        def send_stream_data: (stream_id: ::Integer, data: ::String, ?end_stream: bool) -> void
+        def stop_stream: (stream_id: ::Integer, error_code: ::Integer) -> void
+        private def alpn_handler: (::String alpn_protocol) -> void
+        private def assert_stream_can_receive: (frame_type: ::Integer, stream_id: ::Integer) -> void
+        private def assert_stream_can_send: (frame_type: ::Integer, stream_id: ::Integer) -> void
+        private def consume_peer_cid: () -> void
+        private def close_begin: (is_initiator: bool, now: ::Float) -> void
+        private def close_end: () -> void
+        private def _connect: (now: ::Float) -> void
+        private def discard_epoch: (::Integer epoch) -> void
+        private def find_network_path: (untyped addr) -> QuicNetworkPath # TODO: NetworkAddress
+        private def get_or_create_stream: (frame_type: ::Integer, stream_id: ::Integer) -> ::Raioquic::Quic::Stream::QuicStream
+        private def get_or_create_stream_for_send: (::Integer stream_id) -> ::Raioquic::Quic::Stream::QuicStream
+        private def handle_session_ticket: (::Raioquic::TLS::SessionTicket session_ticket) -> void
+        private def initialize_connection: (::String peer_cid) -> void
+        private def handle_ack_frame: (context: QuicReceiveContext, frame_type: ::Integer, buf: ::Raioquic::Buffer) -> void
+        private def handle_connection_close_frame: (context: QuicReceiveContext, frame_type: ::Integer, buf: ::Raioquic::Buffer) -> void
+        private def handle_crypto_frame: (context: QuicReceiveContext, frame_type: ::Integer, buf: ::Raioquic::Buffer) -> void
+        private def handle_data_blocked_frame: (context: QuicReceiveContext, frame_type: ::Integer, buf: ::Raioquic::Buffer) -> void
+        private def handle_datagram_frame: (context: QuicReceiveContext, frame_type: ::Integer, buf: ::Raioquic::Buffer) -> void
+        private def handle_handshake_done_frame: (context: QuicReceiveContext, frame_type: ::Integer, buf: ::Raioquic::Buffer) -> void
+        private def handle_max_data_frame: (context: QuicReceiveContext, frame_type: ::Integer, buf: ::Raioquic::Buffer) -> void
+        private def handle_max_stream_data_frame: (context: QuicReceiveContext, frame_type: ::Integer, buf: ::Raioquic::Buffer) -> void
+        private def handle_max_streams_bidi_frame: (context: QuicReceiveContext, frame_type: ::Integer, buf: ::Raioquic::Buffer) -> void
+        private def handle_max_streams_uni_frame: (context: QuicReceiveContext, frame_type: ::Integer, buf: ::Raioquic::Buffer) -> void
+        private def handle_new_connection_id_frame: (context: QuicReceiveContext, frame_type: ::Integer, buf: ::Raioquic::Buffer) -> void
+        private def handle_new_token_frame: (context: QuicReceiveContext, frame_type: ::Integer, buf: ::Raioquic::Buffer) -> void
+        private def handle_padding_frame: (context: QuicReceiveContext, frame_type: ::Integer, buf: ::Raioquic::Buffer) -> void
+        private def handle_path_challenge_frame: (context: QuicReceiveContext, frame_type: ::Integer, buf: ::Raioquic::Buffer) -> void
+        private def handle_path_response_frame: (context: QuicReceiveContext, frame_type: ::Integer, buf: ::Raioquic::Buffer) -> void
+        private def handle_ping_frame: (context: QuicReceiveContext, frame_type: ::Integer, buf: ::Raioquic::Buffer) -> void
+        private def handle_reset_stream_frame: (context: QuicReceiveContext, frame_type: ::Integer, buf: ::Raioquic::Buffer) -> void
+        private def handle_retire_connection_id_frame: (context: QuicReceiveContext, frame_type: ::Integer, buf: ::Raioquic::Buffer) -> void
+        private def handle_stop_sending_frame: (context: QuicReceiveContext, frame_type: ::Integer, buf: ::Raioquic::Buffer) -> void
+        private def handle_stream_frame: (context: QuicReceiveContext, frame_type: ::Integer, buf: ::Raioquic::Buffer) -> void
+        private def handle_stream_data_blocked_frame: (context: QuicReceiveContext, frame_type: ::Integer, buf: ::Raioquic::Buffer) -> void
+        private def handle_streams_blocked_frame: (context: QuicReceiveContext, frame_type: ::Integer, buf: ::Raioquic::Buffer) -> void
+        private def log_key_retired: (key_type: ::String, trigger: ::String) -> void
+        private def log_key_updated: (key_type: ::String, trigger: ::String) -> void
+        private def on_ack_delivery: (delivery: ::Integer, space: ::Raioquic::Quic::Recovery::QuicPacketSpace, highest_acked: ::Integer) -> void
+        private def on_connection_limit_delivery: (delivery: ::Integer, limit: Limit) -> void
+        private def on_handshake_done_delivery: (delivery: ::Integer) -> void
+        private def on_max_stream_data_delivery: (delivery: ::Integer, stream: ::Raioquic::Quic::Stream::QuicStream) -> void
+        private def on_new_connection_id_delivery: (delivery: ::Integer, connection_id: QuicConnectionId) -> void
+        private def on_ping_delivery: (delivery: ::Integer, uids: ::Array[::Integer]) -> void
+        private def on_retire_connection_id_delivery: (delivery: ::Integer, sequence_number: ::Integer) -> void
+        private def payload_received: (context: QuicReceiveContext, plain: ::String) -> [bool, bool]
+        private def replenish_connection_ids: () -> void
+        private def retire_peer_cid: (QuicConnectionId connection_id) -> void
+        private def push_crypto_data: () -> void
+        private def send_probe: () -> void
+        private def parse_transport_parameters: (data: ::String, ?from_session_ticket: bool) -> void
+        private def serialize_transport_parameters: () -> ::String
+        private def set_state: (::Integer quic_connection_state) -> void
+        private def stream_can_receive: (::Integer stream_id) -> bool
+        private def stream_can_send: (::Integer stream_id) -> bool
+        private def unblock_streams: (bool is_unidirectional) -> void
+        private def update_traffic_key: (direction: ::Integer, epoch: ::Integer, cipher_suite: ::Integer, secret: ::String) -> void
+        private def write_application: (builder: ::Raioquic::Quic::PacketBuilder::QuicPacketBuilder, network_path: QuicNetworkPath, now: ::Float) -> void
+        private def write_handshake: (builder: ::Raioquic::Quic::PacketBuilder::QuicPacketBuilder, epoch: ::Integer, now: ::Float) -> void
+        private def write_ack_frame: (builder: ::Raioquic::Quic::PacketBuilder::QuicPacketBuilder, space: ::Raioquic::Quic::Recovery::QuicPacketSpace, now: ::Float) -> void
+        private def write_connection_close_frame: (builder: ::Raioquic::Quic::PacketBuilder::QuicPacketBuilder, epoch: ::Integer, error_code: ::Integer, ?frame_type: ::Integer, reason_phrase: ::String) -> void
+        private def write_connection_limits: (builder: ::Raioquic::Quic::PacketBuilder::QuicPacketBuilder, space: ::Raioquic::Quic::Recovery::QuicPacketSpace) -> void
+        private def write_crypto_frame: (builder: ::Raioquic::Quic::PacketBuilder::QuicPacketBuilder, space: ::Raioquic::Quic::Recovery::QuicPacketSpace, stream: ::Raioquic::Quic::Stream::QuicStream) -> bool
+        private def write_datagram_frame: (builder: ::Raioquic::Quic::PacketBuilder::QuicPacketBuilder, data: ::String, frame_type: ::Integer) -> bool
+        private def write_handshake_done_frame: (builder: ::Raioquic::Quic::PacketBuilder::QuicPacketBuilder) -> void
+        private def write_new_connection_id_frame: (builder: ::Raioquic::Quic::PacketBuilder::QuicPacketBuilder, connection_id: QuicConnectionId) -> void
+        private def write_path_challenge_frame: (builder: ::Raioquic::Quic::PacketBuilder::QuicPacketBuilder, challenge: ::String) -> void
+        private def write_path_response_frame: (builder: ::Raioquic::Quic::PacketBuilder::QuicPacketBuilder, challenge: ::String) -> void
+        private def write_ping_frame: (builder: ::Raioquic::Quic::PacketBuilder::QuicPacketBuilder, ?uids: ::Array[::Integer], ?comment: ::String) -> void
+        private def write_reset_stream_frame: (builder: ::Raioquic::Quic::PacketBuilder::QuicPacketBuilder, stream: ::Raioquic::Quic::Stream::QuicStream) -> void
+        private def write_retire_connection_id_frame: (builder: ::Raioquic::Quic::PacketBuilder::QuicPacketBuilder, sequence_number: ::Integer) -> void
+        private def write_stop_sending_frame: (builder: ::Raioquic::Quic::PacketBuilder::QuicPacketBuilder, stream: ::Raioquic::Quic::Stream::QuicStream) -> void
+        private def write_stream_frame: (builder: ::Raioquic::Quic::PacketBuilder::QuicPacketBuilder, space: ::Raioquic::Quic::Recovery::QuicPacketSpace, stream: ::Raioquic::Quic::Stream::QuicStream, max_offset: ::Integer) -> ::Integer
+        private def write_stream_limits: (builder: ::Raioquic::Quic::PacketBuilder::QuicPacketBuilder, space: ::Raioquic::Quic::Recovery::QuicPacketSpace, stream: ::Raioquic::Quic::Stream::QuicStream) -> void
+        private def write_streams_blocked_frame: (builder: ::Raioquic::Quic::PacketBuilder::QuicPacketBuilder, frame_type: ::Integer, limit: ::Integer) -> void
+      end
+    end
+  end
+end
