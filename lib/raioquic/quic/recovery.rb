@@ -256,7 +256,28 @@ module Raioquic
               largest_sent_time = packet.sent_time
 
               # trigger callbacks
-              packet.delivery_handlers&.each { |handler, args| handler.call(::PacketBuilder::QuicDeliveryState::ACKED, **args) } # TODO: right?
+              packet.delivery_handlers&.each do |handler|
+                # TODO: hmm...
+                delivery = Quic::PacketBuilder::QuicDeliveryState::ACKED
+                case handler[0]&.name
+                when :on_data_delivery
+                  handler[0].call(delivery: delivery, start: handler[1][0], stop: handler[1][1])
+                when :on_ack_delivery
+                  handler[0].call(delivery: delivery, space: handler[1][0], highest_acked: handler[1][1])
+                when :on_new_connection_id_delivery
+                  handler[0].call(delivery: delivery, connection_id: handler[1][0])
+                when :on_handshake_done_delivery, :on_reset_delivery, :on_stop_sending_delivery
+                  handler[0].call(delivery: delivery)
+                when :on_ping_delivery
+                  handler[0].call(delivery: delivery, uids: handler[1][0])
+                when :on_connection_limit_delivery
+                  handler[0].call(delivery: delivery, limit: handler[1][0])
+                when :on_retire_connection_id_delivery
+                  handler[0].call(delivery: delivery, sequence_number: handler[1][0])
+                else
+                  raise NotImplementedError, handler[0]
+                end
+              end
             end
           end
 
@@ -397,7 +418,23 @@ module Raioquic
             # TODO: if @quic_logger
 
             # trigger callbacks
-            packet.delivery_handlers&.each { |handler, args| handler.call(::PacketBuilder::QuicDeliveryState::LOST, **args) } # TODO: right?
+            packet.delivery_handlers&.each do |handler|
+              # TODO: hmm...
+              case handler[0]&.name
+              when :on_data_delivery
+                handler[0].call(delivery: Quic::PacketBuilder::QuicDeliveryState::LOST, start: handler[1][0], stop: handler[1][1])
+              when :on_ack_delivery
+                handler[0].call(delivery: Quic::PacketBuilder::QuicDeliveryState::LOST, space: handler[1][0], highest_acked: handler[1][1])
+              when :on_handshake_done_delivery
+                handler[0].call(delivery: Quic::PacketBuilder::QuicDeliveryState::LOST)
+              when :on_new_connection_id_delivery
+                handler[0].call(delivery: Quic::PacketBuilder::QuicDeliveryState::LOST, connection_id: handler[1][0])
+              when :on_connection_limit_delivery
+                handler[0].call(delivery: Quic::PacketBuilder::QuicDeliveryState::LOST, limit: handler[1][0])
+              else
+                raise NotImplementedError, handler[0]
+              end
+            end
           end
 
           # inform congestion controller
