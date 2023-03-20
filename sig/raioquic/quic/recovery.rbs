@@ -82,7 +82,7 @@ module Raioquic
         @peer_completed_address_validation: bool
         @spaces: ::Array[QuicPacketSpace]
         @logger: untyped
-        @quic_logger: untyped
+        @quic_logger: ::Raioquic::Quic::Logger::QuicLoggerTrace | nil
         @send_probe: (^() -> untyped) | nil
         @pto_count: ::Integer
         @rtt_initial: ::Float

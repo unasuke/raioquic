@@ -7,7 +7,7 @@ module Raioquic
       attr_accessor is_client: bool
       attr_accessor max_data: ::Integer
       attr_accessor max_stream_data: ::Integer
-      attr_accessor quic_logger: untyped | nil # TODO: Logger
+      attr_accessor quic_logger: ::Raioquic::Quic::Logger::QuicLogger
       attr_accessor secrets_log_file: untyped
       attr_accessor server_name: ::String | nil
       attr_accessor session_ticket: ::String | nil
