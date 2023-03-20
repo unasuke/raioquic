@@ -70,8 +70,11 @@ module Raioquic
         @private_key = OpenSSL::PKey.read(File.read(keyfile), password) if keyfile
       end
 
-      def load_verify_locations
-        raise NotImplementedError
+      # Load a set of "certification authority" (CA) certificates used to validate other peer's certificates.
+      def load_verify_locations(cafile: nil, capath: nil, cadata: nil)
+        @cafile = cafile
+        @capath = capath
+        @cadata = cadata
       end
     end
   end

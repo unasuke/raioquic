@@ -28,7 +28,7 @@ module Raioquic
       def load_cert_chain: (::String certfile) -> void
                          | (::String certfile, ::String keyfile) -> void
                          | (::String certfile, ::String keyfile, ::String password) -> void
-      def load_verify_locations: () -> void
+      def load_verify_locations: (?cafile: ::String|nil, ?capath: ::String|nil, ?cadata: ::String|nil) -> void
     end
   end
 end
