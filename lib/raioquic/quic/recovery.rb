@@ -23,6 +23,11 @@ module Raioquic
         attr_accessor :ack_eliciting_in_flight
         attr_accessor :loss_time
         attr_accessor :largest_acked_packet
+        attr_accessor :expected_packet_number
+        attr_accessor :largest_received_packet
+        attr_accessor :largest_received_time
+        attr_accessor :ack_queue
+        attr_accessor :discarded
 
         def initialize
           @ack_at = nil
@@ -164,6 +169,9 @@ module Raioquic
         attr_reader :rtt_smoothed
 
         attr_accessor :spaces
+        attr_accessor :peer_completed_address_validation
+        attr_accessor :pacer
+        attr_accessor :max_ack_delay
 
         def initialize(initial_rtt:, peer_completed_address_validation:, send_probe: nil, logger: nil, quic_logger: nil)
           @max_ack_delay = 0.025

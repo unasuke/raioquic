@@ -19,6 +19,11 @@ module Raioquic
         attr_accessor ack_eliciting_in_flight: ::Integer
         attr_accessor loss_time: ::Float | nil
         attr_accessor largest_acked_packet: ::Integer
+        attr_accessor expected_packet_number: ::Integer
+        attr_accessor largest_received_packet: ::Integer
+        attr_accessor largest_received_time: ::Float | nil
+        attr_accessor ack_queue: Rangeset
+        attr_accessor discarded: bool
 
         @ack_at: ::Float | nil
         @ack_queue: Rangeset
@@ -77,6 +82,9 @@ module Raioquic
         attr_reader rtt_smoothed: ::Float
 
         attr_accessor spaces: ::Array[QuicPacketSpace]
+        attr_accessor peer_completed_address_validation: bool
+        attr_accessor pacer: QuicPacketPacer
+        attr_accessor max_ack_delay: ::Float
 
         @max_ack_delay: ::Float
         @peer_completed_address_validation: bool
