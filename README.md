@@ -1,8 +1,10 @@
 # Raioquic
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/raioquic`. To experiment with that code, run `bin/console` for an interactive prompt.
+Raioquic is a ruby porting of [aiortc/aioquic](https://github.com/aiortc/aioquic), that python's async IO library.
 
-TODO: Delete this and the text above, and describe your gem
+## :warning: **DISCLAIMER** :warning:
+
+Porting is incomplete, and I'm not going to create complete porting. Do not use this gem in production. If you want to use this gem, you **SHOULD** deeply understand QUIC protocol.
 
 ## Installation
 
@@ -14,15 +16,19 @@ gem 'raioquic'
 
 And then execute:
 
-    $ bundle install
+```sh
+$ bundle install
+```
 
 Or install it yourself as:
 
-    $ gem install raioquic
+```sh
+$ gem install raioquic
+```
 
 ## Usage
 
-TODO: Write usage instructions here
+See [test](test/).
 
 ## Development
 
@@ -37,3 +43,6 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/unasuk
 ## Code of Conduct
 
 Everyone interacting in the Raioquic project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/unasuke/raioquic/blob/main/CODE_OF_CONDUCT.md).
+
+## Acknowledgement
+* <https://github.com/aiortc/aioquic>
