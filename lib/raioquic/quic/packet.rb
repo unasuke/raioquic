@@ -97,7 +97,7 @@ module Raioquic
       end
 
       def self.get_spin_bit(first_byte)
-        (first_byte & PACKET_SPIN_BIT) != 0
+        (first_byte.unpack1("C") & PACKET_SPIN_BIT) != 0
       end
 
       def self.is_draft_version(_version)
@@ -353,7 +353,7 @@ module Raioquic
             if param_obj[:type] == :int
               param_buf.push_uint_var(param_value)
             elsif param_obj[:type] == :bytes
-              param_buf.push_bytes(param_value)
+              param_buf.push_bytes(param_value.to_s)
             elsif param_obj[:type] == :quicpreferredaddress
               push_quic_preferred_address(buf: param_buf, preferred_address: param_value)
             end
