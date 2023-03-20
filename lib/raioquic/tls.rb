@@ -1214,7 +1214,7 @@ module Raioquic
           # calculate early data key
           if hello.early_data
             early_key = @key_schedule_psk.derive_secret("c e traffic")
-            @update_traffic_key_cb.call(Direction::ENCRYPT, Epoch::ZERO_RTT, @key_schedule_psk.cipher_suite, early_key)
+            @update_traffic_key_cb.call(direction: Direction::ENCRYPT, epoch: Epoch::ZERO_RTT, cipher_suite: @key_schedule_psk.cipher_suite, secret: early_key)
           end
         end
 
@@ -1360,7 +1360,7 @@ module Raioquic
 
         # commit traffic key
         @enc_key = next_enc_key
-        @update_traffic_key_cb.call(Direction::ENCRYPT, Epoch::ONE_RTT, @key_schedule.cipher_suite, @enc_key)
+        @update_traffic_key_cb.call(direction: Direction::ENCRYPT, epoch: Epoch::ONE_RTT, cipher_suite: @key_schedule.cipher_suite, secret: @enc_key)
         set_state(State::CLIENT_POST_HANDSHAKE)
       end
 
@@ -1447,7 +1447,7 @@ module Raioquic
             if peer_hello.early_data
               early_key = @key_schedule.derive_secret("c e traffic")
               @early_data_accepted = true
-              @update_traffic_key_cb.call(Direction::DECRYPT, Epoch::ZERO_RTT, @key_schedule.cipher_suite, early_key)
+              @update_traffic_key_cb.call(direction: Direction::DECRYPT, epoch: Epoch::ZERO_RTT, cipher_suite: @key_schedule.cipher_suite, secret: early_key)
             end
             pre_shared_key = 0
           end
@@ -1583,7 +1583,7 @@ module Raioquic
         # commit traffic key
         @dec_key = @next_dec_key
         @next_dec_key = nil
-        @update_traffic_key_cb.call(Direction::DECRYPT, Epoch::ONE_RTT, @key_schedule.cipher_suite, @dec_key)
+        @update_traffic_key_cb.call(direction: Direction::DECRYPT, epoch: Epoch::ONE_RTT, cipher_suite: @key_schedule.cipher_suite, secret: @dec_key)
         set_state(State::SERVER_POST_HANDSHAKE)
       end
 
@@ -1595,7 +1595,7 @@ module Raioquic
         else
           @dec_key = key
         end
-        @update_traffic_key_cb.call(direction, epoch, @key_schedule.cipher_suite, key)
+        @update_traffic_key_cb.call(direction: direction, epoch: epoch, cipher_suite: @key_schedule.cipher_suite, secret: key)
       end
 
       def set_state(state)
