@@ -96,9 +96,10 @@ module Raioquic
 
       # New Reno congestion control.
       class QuicCongestionControl
-        attr_reader :bytes_in_flight
         attr_reader :congestion_window
         attr_reader :ssthresh
+
+        attr_accessor :bytes_in_flight
 
         def initialize
           @bytes_in_flight = 0
@@ -167,6 +168,7 @@ module Raioquic
         attr_reader :rtt_latest
         attr_reader :rtt_min
         attr_reader :rtt_smoothed
+        attr_reader :cc
 
         attr_accessor :spaces
         attr_accessor :peer_completed_address_validation

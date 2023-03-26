@@ -56,9 +56,10 @@ module Raioquic
       end
 
       class QuicCongestionControl
-        attr_reader bytes_in_flight: ::Integer
         attr_reader congestion_window: ::Numeric
         attr_reader ssthresh: ::Integer | nil
+
+        attr_accessor bytes_in_flight: ::Integer
 
         @bytes_in_flight: ::Integer
         @congestion_window: ::Numeric

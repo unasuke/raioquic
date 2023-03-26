@@ -2347,7 +2347,7 @@ class TestRaioquicQuicConnection < Minitest::Test
       assert_equal 1048576, server.remote_max_data
 
       # artificially raise bytes in flight
-      # client.loss.cc.bytes_in_flight = 14303 # TODO: ???
+      client.loss.cc.bytes_in_flight = 14303
 
       # MAX_DATA is not sent due to congestion control
       assert_equal 0, drop(client)
