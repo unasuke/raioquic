@@ -707,18 +707,24 @@ class TestRaioquicQuicConnection < Minitest::Test
     assert_equal [224], datagram_sizes(items)
   end
 
-  def test_connection_with_no_transport_parameters
-    skip "how to patch client.initial_connection ...?" # TODO: use Object#extend
-
+  def test_connect_with_no_transport_parameters
     # Patch client's TLS initialization to clear TLS extensions.
     patch = lambda do |client|
-      patched_initialize = lambda do |peer_cid|
-        client.send(:initialize_connection, peer_cid)
-        client.tls.handshake_extensions = []
+      ::Raioquic::Quic::Connection::QuicConnection.class_exec do
+        alias_method :orig_initialize_connection, :initialize_connection
+        define_method(:initialize_connection) do |*args|
+          send(:orig_initialize_connection, *args)
+          @tls.handshake_extensions = []
+        end
       end
     end
     client_and_server(client_patch: patch) do |_client, server|
       assert_equal "No QUIC transport parameters received", server.close_event.reason_phrase
+    end
+
+    # teardown
+    ::Raioquic::Quic::Connection::QuicConnection.class_exec do
+      alias_method :initialize_connection, :orig_initialize_connection
     end
   end
 
@@ -777,16 +783,38 @@ class TestRaioquicQuicConnection < Minitest::Test
   end
 
   def test_connect_with_0rtt_bad_max_early_data
-    skip "how to patch client.initial_connection ...?" # TODO: use Object#extend
     client_ticket = nil
-    ticket_store SessionTicketStore.new
+    ticket_store = SessionTicketStore.new
 
     # Patch server's TLS initialization to set an invalid max_early_data value.
     patch = lambda do |server|
-      patched_initialize = lambda do |peer_cid|
-        server.send(:initialize_connection, peer_cid)
-        server.tls.max_early_data = 12345
+      ::Raioquic::Quic::Connection::QuicConnection.class_exec do
+        alias_method :orig_initialize_connection, :initialize_connection
+        define_method(:initialize_connection) do |*args|
+          send(:orig_initialize_connection, *args)
+          @tls.instance_eval { @max_early_data = 12345 }
+        end
       end
+    end
+
+    save_session_ticket = lambda do |ticket|
+      client_ticket = ticket
+    end
+
+    client_and_server(
+      client_kwargs: { session_ticket_handler: save_session_ticket },
+      server_kwargs: { session_ticket_handler: ticket_store.method(:add) },
+      server_patch: patch,
+    ) do |client, server|
+      # check handshake failed
+      event = client.next_event
+      assert_nil event
+    end
+
+  ensure
+    # teardown
+    ::Raioquic::Quic::Connection::QuicConnection.class_exec do
+      alias_method :initialize_connection, :orig_initialize_connection
     end
   end
 
@@ -942,18 +970,33 @@ class TestRaioquicQuicConnection < Minitest::Test
   end
 
   def test_tls_error
-    skip "Use Object#extend to patch client#initialize_connection"
+    # Patch the client's TLS initialization to send invalid TLS version.
+    patch = lambda do |server|
+      ::Raioquic::Quic::Connection::QuicConnection.class_exec do
+        alias_method :orig_initialize_connection, :initialize_connection
+        define_method(:initialize_connection) do |*args|
+          send(:orig_initialize_connection, *args)
+          @tls.instance_eval { @supported_versions = [0x7f1c] } # version 1.3 DRAFT 28
+        end
+      end
+    end
 
     # handshake fails
-    client_and_server(client_patch: "") do |_client, server|
+    client_and_server(client_patch: patch) do |_client, server|
       timer_at = server.get_timer
-      server.handle_timer(timer_at)
+      server.handle_timer(now: timer_at)
 
       event = server.next_event
       assert_equal ::Raioquic::Quic::Event::ConnectionTerminated, event.class
       assert_equal 326, event.error_code
       assert_equal ::Raioquic::Quic::Packet::QuicFrameType::CRYPTO, event.frame_type
       assert_equal "No supported protocol version", event.reason_phrase
+    end
+
+  ensure
+    # teardown
+    ::Raioquic::Quic::Connection::QuicConnection.class_exec do
+      alias_method :initialize_connection, :orig_initialize_connection
     end
   end
 
@@ -966,23 +1009,29 @@ class TestRaioquicQuicConnection < Minitest::Test
 
   def test_receive_datagram_reserved_bits_non_zero
     client = create_standalone_client
-    skip "overriding"
+    # skip "overriding"
     builder = ::Raioquic::Quic::PacketBuilder::QuicPacketBuilder.new(
       host_cid: client.peer_cid.cid,
       is_client: false,
       peer_cid: client.host_cid,
       version: client.version,
     )
+
+    ::Raioquic::Quic::Crypto::CryptoPair.class_eval do
+      alias_method :orig_encrypt_packet, :encrypt_packet
+      define_method(:encrypt_packet) do |**args|
+        # mess with reserved bits
+        args[:plain_header][0] = [args[:plain_header][0].unpack1("C*") | 0x0c].pack("C*")
+        return public_send(
+          :orig_encrypt_packet,
+          plain_header: args[:plain_header],
+          plain_payload: args[:plain_payload],
+          packet_number: args[:packet_number],
+        )
+      end
+    end
     crypto = ::Raioquic::Quic::Crypto::CryptoPair.new
     crypto.setup_initial(cid: client.peer_cid.cid, is_client: false, version: client.version)
-    crypto.encrypt_packet_real = crypto.encrypt_packet # TODO: ?
-
-    encrypt_packet = lambda do |plain_header, plain_payload, packet_number|
-      # mess with reserved bits
-      plain_header = (plain_header[0] | 0x0c) + plain_header[1..] # TODO: ?
-      return crypto.encrypt_packet_real(plain_header, plain_payload, packet_number)
-    end
-    crypto.encrypt_packet = encrypt_packet
 
     builder.start_packet(packet_type: ::Raioquic::Quic::Packet::PACKET_TYPE_INITIAL, crypto: crypto)
     buf = builder.start_frame(frame_type: ::Raioquic::Quic::Packet::QuicFrameType::PADDING)
@@ -997,6 +1046,10 @@ class TestRaioquicQuicConnection < Minitest::Test
       ev.frame_type = ::Raioquic::Quic::Packet::QuicFrameType::PADDING
       ev.reason_phrase = "Reserved bits must be zero"
     }, client.close_event
+  ensure
+    ::Raioquic::Quic::Crypto::CryptoPair.class_eval do
+      alias_method :encrypt_packet, :orig_encrypt_packet
+    end
   end
 
   def test_receive_datagram_wrong_version
