@@ -384,7 +384,7 @@ class TestRaioquicQuicStream < Minitest::Test
       event.error_code = ::Raioquic::Quic::Packet::QuicErrorCode::NO_ERROR
       event.stream_id = 0
     end
-    assert_equal reset, stream.receiver.handle_reset(finai_size: 4)
+    assert_equal reset, stream.receiver.handle_reset(final_size: 4)
     assert stream.receiver.is_finished
   end
 
@@ -402,7 +402,7 @@ class TestRaioquicQuicStream < Minitest::Test
       event.error_code = ::Raioquic::Quic::Packet::QuicErrorCode::NO_ERROR
       event.stream_id = 0
     end
-    assert_equal reset, stream.receiver.handle_reset(finai_size: 4)
+    assert_equal reset, stream.receiver.handle_reset(final_size: 4)
   end
 
   def test_receiver_reset_twice
@@ -412,8 +412,8 @@ class TestRaioquicQuicStream < Minitest::Test
       event.error_code = ::Raioquic::Quic::Packet::QuicErrorCode::NO_ERROR
       event.stream_id = 0
     end
-    assert_equal reset, stream.receiver.handle_reset(finai_size: 4)
-    assert_equal reset, stream.receiver.handle_reset(finai_size: 4)
+    assert_equal reset, stream.receiver.handle_reset(final_size: 4)
+    assert_equal reset, stream.receiver.handle_reset(final_size: 4)
   end
 
   def test_receiver_reset_twice_final_size_error
@@ -423,10 +423,10 @@ class TestRaioquicQuicStream < Minitest::Test
       event.error_code = ::Raioquic::Quic::Packet::QuicErrorCode::NO_ERROR
       event.stream_id = 0
     end
-    assert_equal reset, stream.receiver.handle_reset(finai_size: 4)
+    assert_equal reset, stream.receiver.handle_reset(final_size: 4)
 
     ex = assert_raises ::Raioquic::Quic::Stream::FinalSizeError do
-      stream.receiver.handle_reset(finai_size: 5)
+      stream.receiver.handle_reset(final_size: 5)
     end
     assert_equal "Cannot change final size", ex.message
   end
