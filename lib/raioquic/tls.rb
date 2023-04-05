@@ -993,7 +993,7 @@ module Raioquic
         @alpn_cb = nil
         @get_session_ticket_cb = nil
         @new_session_ticket_cb = nil
-        @update_traffic_key_cb = ->(_direction, _epoch, _cipher_suite, _secret) {}
+        @update_traffic_key_cb = ->(direction: _direction, epoch: _epoch, cipher_suite:  _cipher_suite, secret: _secret) {}
         @cipher_suites =
           cipher_suites || [
             CipherSuite::AES_256_GCM_SHA384,
