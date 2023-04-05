@@ -1404,7 +1404,7 @@ module Raioquic
 
         # binding.irb
         # negotiate alpn
-        if @alpn_protocols
+        if @alpn_protocols && !@alpn_protocols.empty?
           # binding.irb
           @alpn_negotiated = TLS.negotiate(supported: @alpn_protocols, offered: peer_hello.alpn_protocols, exc: AlertHandshakeFailure)
         end
