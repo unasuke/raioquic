@@ -1119,7 +1119,7 @@ module Raioquic
           unless stream
             # check initiator
             puts "@@@@@@@@@@@@@@@@@@@@@@ #{stream}"
-            if Connection.stream_is_client_initiated(stream || 0) == @is_client
+            if Connection.stream_is_client_initiated(stream_id || 0) == @is_client
               # binding.irb
               err = QuicConnectionError.new.tap do |e|
                 e.error_code = Quic::Packet::QuicErrorCode::STREAM_STATE_ERROR
