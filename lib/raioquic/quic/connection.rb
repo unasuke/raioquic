@@ -396,8 +396,6 @@ module Raioquic
         # param error_code: An error code indication why the connection is being closed.
         # param reason_phrase: A human-readable explanation of why the connection is being closed.
         def close(error_code: Quic::Packet::QuicErrorCode::NO_ERROR, frame_type: nil, reason_phrase: "")
-          puts "close called (server)" unless @is_client
-          puts reason_phrase unless @is_client
           if @close_event.nil? && !END_STATES.include?(@state)
             @close_event = Quic::Event::ConnectionTerminated.new.tap do |error|
               error.error_code = error_code
@@ -433,8 +431,6 @@ module Raioquic
         #
         # param now: The current time.
         def datagrams_to_send(now:)
-          puts "datagrams_to_send called (server)" unless @is_client
-          puts "datagrams_to_send called (client)" if @is_client
           network_path = @network_paths[0]
 
           return [] if END_STATES.include?(@state)
@@ -451,7 +447,6 @@ module Raioquic
             version: @version,
           )
           if @close_pending
-            puts "datagrams_to_send close_pending: true (server)" unless @is_client
             epoch_packet_types = []
             unless @handshake_confirmed
               epoch_packet_types += [
@@ -466,7 +461,6 @@ module Raioquic
               next unless crypto&.send&.is_valid
 
               # binding.irb unless @is_client
-              puts "PacketBuilder#start_packet called from datagrams_to_send"
               builder.start_packet(packet_type: packet_type, crypto: crypto)
               # binding.irb
               write_connection_close_frame(
@@ -486,7 +480,6 @@ module Raioquic
             if @probe_pending && builder.max_flight_bytes < Quic::PacketBuilder::PACKET_MAX_SIZE
               builder.max_flight_bytes = Quic::PacketBuilder::PACKET_MAX_SIZE
             end
-            puts "**** builder.max_flight_bytes: #{builder.max_flight_bytes}"
 
             # limit data on un-validated network paths
             builder.max_total_bytes = (network_path.bytes_received * 3) - network_path.bytes_sent unless network_path.is_validated
@@ -494,11 +487,9 @@ module Raioquic
             begin
               unless @handshake_confirmed
                 [TLS::Epoch::INITIAL, TLS::Epoch::HANDSHAKE].each do |epoch|
-                  puts "write_handshake called by datagrams_to_send"
                   write_handshake(builder: builder, epoch: epoch, now: now)
                 end
               end
-              puts "write_application called by datagrams_to_send"
               write_application(builder: builder, network_path: network_path, now: now)
             rescue Quic::PacketBuilder::QuicPacketBuilderStop
               # pass
@@ -506,7 +497,6 @@ module Raioquic
           end
 
           datagrams, packets = builder.flush
-          puts "flushed datagrams #{datagrams.length}"
 
           if datagrams
             @packet_number = builder.packet_number
@@ -551,9 +541,6 @@ module Raioquic
             ret << [datagram, network_path.addr]
 
             if @quic_logger
-              if payload_length == 238
-                puts "hraf"
-              end
               @quic_logger.log_event(
                 category: "transport",
                 event: "datagrams_sent",
@@ -565,7 +552,6 @@ module Raioquic
             end
           end
 
-          puts "ret length #{ret.length}"
           return ret
         end
 
@@ -643,8 +629,6 @@ module Raioquic
         # param addr: The network address from which the datagram was received.
         # param now: The current time.
         def receive_datagram(data:, addr:, now:)
-          puts "receive_datagram called (server)" unless @is_client
-          puts "receive_datagram called (client)" if @is_client
           # stop handling packets when closing
           return if END_STATES.include?(@state)
 
@@ -766,7 +750,6 @@ module Raioquic
             # handle retry packet
             # binding.irb
             if header.packet_type == Quic::Packet::PACKET_TYPE_RETRY
-              puts "&*(*(&*(&*(&*(&*(&*()*)(*)*()*()&*(&^*()))))))"
               tag = Quic::Packet.get_retry_integrity_tag(
                 packet_without_tag: buf.data_slice(
                   start: start_off,
@@ -863,7 +846,6 @@ module Raioquic
 
             # log packet
             quic_logger_frames = []
-            puts "INIT  QUIC_LOGGER_FRAMES #{quic_logger_frames.object_id}"
             if @quic_logger
               @quic_logger.log_event(
                 category: "transport",
@@ -918,10 +900,8 @@ module Raioquic
               ctx.quic_logger_frames = quic_logger_frames
               ctx.time = now
             end
-            puts "CONTEXT CREATE #{context.quic_logger_frames.object_id}"
 
             begin
-              puts "payload_received will be call" unless @is_client
               is_ack_eliciting, is_probing = payload_received(context: context, plain: plain_payload)
             rescue QuicConnectionError => err
               # TODO: logging
@@ -1118,7 +1098,6 @@ module Raioquic
           stream = @streams[stream_id]
           unless stream
             # check initiator
-            puts "@@@@@@@@@@@@@@@@@@@@@@ #{stream}"
             if Connection.stream_is_client_initiated(stream_id || 0) == @is_client
               # binding.irb
               err = QuicConnectionError.new.tap do |e|
@@ -1370,7 +1349,6 @@ module Raioquic
 
           # log frame
           if @quic_logger
-            puts "ENCODE_CRYPTO_FRAME CONTEXT #{context.quic_logger_frames.object_id}"
             context.quic_logger_frames << @quic_logger.encode_crypto_frame(frame: frame)
           end
 
@@ -1413,7 +1391,6 @@ module Raioquic
             # update current epoch
             # binding.irb unless @is_client
             if !@handshake_complete && [TLS::State::CLIENT_POST_HANDSHAKE, TLS::State::SERVER_POST_HANDSHAKE].include?(@tls.state)
-              puts "handshake complete!" unless @is_client
               @handshake_complete = true
 
               # for servers, the handshake is now confirmed
@@ -1991,7 +1968,6 @@ module Raioquic
           frame_found = false
           is_ack_eliciting = false
           is_probing = nil
-          pp plain
           until buf.eof
             frame_type = buf.pull_uint_var
 
@@ -2303,9 +2279,6 @@ module Raioquic
         end
 
         private def write_application(builder:, network_path:, now:)
-          # binding.b
-          puts "write_application called (client)" if @is_client
-          puts "write_application called (server)" unless @is_client
           crypto_stream = nil
           if @cryptos[TLS::Epoch::ONE_RTT].send.is_valid
             crypto = @cryptos[TLS::Epoch::ONE_RTT]
@@ -2322,18 +2295,11 @@ module Raioquic
           c = -1
           while true
             c += 1
-            puts "while loop #{c}"
-            # binding.b
-            # binding.irb unless @is_client
             # apply pacing, except if we have ACKs to send
             if space.ack_at.nil? || space.ack_at >= now
               @pacing_at = @loss.pacer.next_send_time(now: now)
-              puts "!!!!break!!!!" if @pacing_at
               break if @pacing_at
             end
-            puts "PacketBuilder#start_packet called from write_application"
-            pp packet_type
-            # binding.b
             builder.start_packet(packet_type: packet_type, crypto: crypto)
 
             if @handshake_complete
@@ -2360,11 +2326,8 @@ module Raioquic
               end
 
               # NEW_CONNECTION_ID
-              pp @host_cids unless @is_client
               @host_cids.each do |connection_id|
-                pp connection_id unless @is_client
                 unless connection_id.was_sent
-                  puts "write_new_connection_id write_application" unless @is_client
                   write_new_connection_id_frame(builder: builder, connection_id: connection_id)
                 end
                 # write_new_connection_id_frame(builder: builder, connection_id: connection_id) unless connection_id.was_sent
@@ -2421,7 +2384,6 @@ module Raioquic
                 write_datagram_frame(builder: builder, data: @datagrams_pending[0], frame_type: Quic::Packet::QuicFrameType::DATAGRAM_WITH_LENGTH)
                 @datagrams_pending.pop
               rescue Quic::PacketBuilder::QuicPacketBuilderStop
-                puts "!!!!stop break!!!!"
                 break
               end
             end
@@ -2453,7 +2415,6 @@ module Raioquic
             end
             # puts "builder.packer_is_emprty: #{builder.packet_is_empty}"
             if builder.packet_is_empty
-              puts "!!!!empty break!!!!"
               break
             else
               @loss.pacer.update_after_send(now: now)
@@ -2474,7 +2435,6 @@ module Raioquic
             else
               packet_type = Quic::Packet::PACKET_TYPE_HANDSHAKE
             end
-            puts "PacketBuilder#start_packet called from write_handshake"
             builder.start_packet(packet_type: packet_type, crypto: crypto)
 
             # ACK
@@ -2631,7 +2591,6 @@ module Raioquic
         end
 
         private def write_new_connection_id_frame(builder:, connection_id:)
-          puts "write_new_connection_id_frame (server)" unless @is_client
           retire_prior_to = 0 # FIXME: from original
 
           buf = builder.start_frame(
